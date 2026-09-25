@@ -214,6 +214,25 @@ fun SubscriptionListItem(
     }
 }
 
+/** Picks the server ordering. */
+@Composable
+fun SortDialog(
+    current: String,
+    onPick: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val strings = LocalStrings.current
+    OptionsDialog(
+        title = strings.sortServers,
+        options = listOf(
+            strings.sortByPing to { onPick("ping") },
+            strings.sortByName to { onPick("name") },
+            strings.sortByDefault to { onPick("default") }
+        ),
+        onDismiss = onDismiss
+    )
+}
+
 /** Minimal option list dialog used everywhere instead of a bottom sheet. */
 @Composable
 fun OptionsDialog(

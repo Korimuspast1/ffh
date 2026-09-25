@@ -20,6 +20,7 @@ import com.ffh.vpn.core.VpnController
 import com.ffh.vpn.core.VpnStateHolder
 import com.ffh.vpn.core.VpnStatus
 import com.ffh.vpn.core.xray.XrayConfigBuilder
+import com.ffh.vpn.core.xray.XrayProbe
 import com.ffh.vpn.data.AddResult
 import com.ffh.vpn.data.AppRepository
 import com.ffh.vpn.data.AppSettings
@@ -40,6 +41,7 @@ import com.ffh.vpn.ui.screens.LogsScreen
 import com.ffh.vpn.ui.screens.OptionsDialog
 import com.ffh.vpn.ui.screens.RoutingScreen
 import com.ffh.vpn.ui.screens.SettingsRootScreen
+import com.ffh.vpn.ui.screens.SortDialog
 import com.ffh.vpn.ui.screens.SubscriptionInfoScreen
 import com.ffh.vpn.ui.screens.SubscriptionSettingsScreen
 import com.ffh.vpn.ui.screens.SubscriptionsScreen
@@ -66,6 +68,7 @@ fun AppNav(
 
     val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
     var optionsServer by remember { mutableStateOf<ServerProfile?>(null) }
+    var sortDialog by remember { mutableStateOf(false) }
     var testing by remember { mutableStateOf(false) }
     var configPreview by remember { mutableStateOf<String?>(null) }
 
@@ -81,8 +84,20 @@ fun AppNav(
         if (servers.isEmpty()) return
         scope.launch {
             testing = true
-            val results = Pinger.measureAll(servers, settings.pingConcurrency, settings.pingTimeoutMs) { partial ->
-                AppRepository.setPing(partial)
+            val results = if (settings.pingMode == "proxy") {
+                // A real request through the server: slower, but it proves
+                // that the server actually passes traffic.
+                XrayProbe.measureAll(
+                    context = context,
+                    servers = servers.filter { it.isSupported },
+                    url = settings.pingUrl,
+                    timeoutMs = settings.pingTimeoutMs.coerceAtLeast(8_000),
+                    parallelism = 2
+                ) { partial -> AppRepository.setPing(partial) }
+            } else {
+                Pinger.measureAll(servers, settings.pingConcurrency, settings.pingTimeoutMs) { partial ->
+                    AppRepository.setPing(partial)
+                }
             }
             AppRepository.setPing(results)
             testing = false
@@ -169,7 +184,8 @@ fun AppNav(
             onServerOptions = { optionsServer = it },
             onPowerClick = ::togglePower,
             onOpenHomepage = onOpenUrl,
-            onOpenSupport = { push(Screen.About) }
+            onOpenSupport = { push(Screen.About) },
+            onSort = { sortDialog = true }
         )
 
         Screen.Subscriptions -> SubscriptionsScreen(
@@ -221,7 +237,8 @@ fun AppNav(
                 onDelete = { scope.launch { AppRepository.removeSubscription(sub.id); pop() } },
                 onExport = { onShareText(AppRepository.buildExportLinks(sub)) },
                 onShare = { onShareText(sub.url ?: AppRepository.buildExportLinks(sub)) },
-                onOpenHomepage = onOpenUrl
+                onOpenHomepage = onOpenUrl,
+                onSort = { sortDialog = true }
             )
             }
         }
@@ -320,6 +337,14 @@ fun AppNav(
         Screen.About -> AboutScreen(onBack = ::pop)
 
         null -> Unit
+    }
+
+    if (sortDialog) {
+        SortDialog(
+            current = settings.serverSort,
+            onPick = { mode -> applySettings(settings.copy(serverSort = mode)) },
+            onDismiss = { sortDialog = false }
+        )
     }
 
     optionsServer?.let { server ->

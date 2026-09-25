@@ -25,6 +25,9 @@
 # serialized by kotlinx.serialization, which relies on the serializer classes)
 -keepclassmembers class com.ffh.vpn.core.xray.** { *; }
 
+# JNI launcher. R8 must not rename the class or the native methods.
+-keep class com.ffh.vpn.core.CoreLauncher { *; }
+
 # Remove noisy logging in release
 -assumenosideeffects class android.util.Log {
     public static *** v(...);

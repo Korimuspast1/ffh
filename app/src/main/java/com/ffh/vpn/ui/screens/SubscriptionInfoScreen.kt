@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.NetworkPing
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ffh.vpn.data.model.ServerProfile
+import com.ffh.vpn.data.model.sortedWithMode
 import com.ffh.vpn.data.model.Subscription
 import com.ffh.vpn.i18n.LocalStrings
 import com.ffh.vpn.ui.Format
@@ -62,7 +64,8 @@ fun SubscriptionInfoScreen(
     onDelete: () -> Unit,
     onExport: () -> Unit,
     onShare: () -> Unit,
-    onOpenHomepage: (String) -> Unit
+    onOpenHomepage: (String) -> Unit,
+    onSort: () -> Unit
 ) {
     val strings = LocalStrings.current
     val palette = LocalFfhPalette.current
@@ -122,10 +125,19 @@ fun SubscriptionInfoScreen(
                         )
                         Spacer(Modifier.width(10.dp))
                         SecondaryButton(
+                            text = strings.sortServers,
+                            onClick = onSort,
+                            icon = Icons.Default.Sort,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        SecondaryButton(
                             text = strings.exportLinks,
                             onClick = onExport,
                             icon = Icons.Default.Link,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
 
@@ -153,7 +165,7 @@ fun SubscriptionInfoScreen(
                         )
                     }
                 } else {
-                    items(items = subscription.servers, key = { it.id }) { server ->
+                    items(items = subscription.servers.sortedWithMode(settings.serverSort), key = { it.id }) { server ->
                         ServerRow(
                             profile = server,
                             selected = server.id == settings.selectedServerId,

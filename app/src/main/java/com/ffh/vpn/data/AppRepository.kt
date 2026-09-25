@@ -50,7 +50,12 @@ object AppRepository {
     fun init(context: Context) {
         if (::stateFile.isInitialized) return
         stateFile = File(context.filesDir, "ffh/state.json")
-        _state.value = JsonStore.load(stateFile, AppState())
+        val loaded = JsonStore.load(stateFile, AppState())
+        val migrated = loaded.copy(settings = loaded.settings.migrated())
+        _state.value = migrated
+        if (migrated != loaded) {
+            runCatching { JsonStore.save(stateFile, migrated) }
+        }
     }
 
     val isReady: Boolean get() = ::stateFile.isInitialized

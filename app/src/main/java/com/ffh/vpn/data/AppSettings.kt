@@ -30,7 +30,7 @@ data class AppSettings(
     val httpEnabled: Boolean = true,
     val httpPort: Int = 10809,
     val sniffing: Boolean = true,
-    val blockQuic: Boolean = true,
+    val blockQuic: Boolean = false,
     val autoConnect: Boolean = false,
     val connectOnBoot: Boolean = false,
     val reconnectOnFailure: Boolean = true,
@@ -61,13 +61,35 @@ data class AppSettings(
     val keepServersOnFailure: Boolean = true,
     val userAgent: String = DEFAULT_USER_AGENT,
     val pingOnUpdate: Boolean = true,
-    val pingTimeoutMs: Int = 2000,
+    /** `tcp` — a plain TCP connect, `proxy` — a real HTTP GET through the server. */
+    val pingMode: String = "proxy",
+    val pingUrl: String = "https://www.gstatic.com/generate_204",
+    val pingTimeoutMs: Int = 4000,
     val pingConcurrency: Int = 24,
 
     // -------------------------------------------------------------- selection
+    /** `default`, `ping` or `name` — how the server list is ordered. */
+    val serverSort: String = "ping",
+
     val selectedSubscriptionId: String? = null,
-    val selectedServerId: String? = null
+    val selectedServerId: String? = null,
+
+    /**
+     * Bumped when a saved default has to be corrected once. Old files decode
+     * this as 0 and are migrated on the next launch.
+     */
+    val settingsRevision: Int = 0
 ) {
+    /** One-shot corrections for settings written by older builds. */
+    fun migrated(): AppSettings {
+        if (settingsRevision >= CURRENT_REVISION) return this
+        return copy(
+            settingsRevision = CURRENT_REVISION,
+            // UDP 443 used to be dropped. Chrome and a lot of apps then sat
+            // there until TCP fallback, which looks exactly like "nothing works".
+            blockQuic = false
+        )
+    }
     companion object {
         /** Lazily built: the defaults below are members of this companion. */
         val DEFAULT: AppSettings by lazy { AppSettings() }
@@ -102,6 +124,10 @@ data class AppSettings(
         )
 
         const val DEFAULT_USER_AGENT = "FFH-VPN/1.0 (Xray-core)"
+
+        val PING_MODES = listOf("proxy", "tcp")
+        val SERVER_SORTS = listOf("default", "ping", "name")
+        const val CURRENT_REVISION = 2
 
         val LANGUAGES = listOf("system", "ru", "en")
         val ROUTING_MODES = listOf("global", "bypass_lan", "manual")

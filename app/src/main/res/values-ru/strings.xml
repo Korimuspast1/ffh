@@ -5,5 +5,6 @@
     <string name="notification_channel_updates">Обновления подписок</string>
     <string name="notification_channel_updates_desc">Уведомления об обновлении подписок</string>
     <string name="notification_connecting">Подключение…</string>
+    <string name="notification_connected">Подключено</string>
     <string name="notification_action_disconnect">Отключить</string>
 </resources>

@@ -8,7 +8,7 @@
 # binary is shipped as `libxray.so` inside jniLibs/<abi>/.
 set -euo pipefail
 
-XRAY_VERSION="${1:-${XRAY_VERSION:-v26.3.27}}"
+XRAY_VERSION="${1:-${XRAY_VERSION:-v26.9.9}}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 JNILIBS="$ROOT_DIR/app/src/main/jniLibs"
 ASSETS="$ROOT_DIR/app/src/main/assets"

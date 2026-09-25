@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icon for the quick settings tile: monochrome power symbol. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M13,3h-2v10h2V3z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,21c3.31,0 6,-2.69 6,-6c0,-2.1 -1.08,-3.95 -2.71,-5.03l-1.42,1.42C15.15,12.14 16,13.51 16,15c0,2.21 -1.79,4 -4,4s-4,-1.79 -4,-4c0,-1.49 0.85,-2.86 2.13,-3.61l-1.42,-1.42C7.08,11.05 6,12.9 6,15c0,3.31 2.69,6 6,6z" />
+</vector>

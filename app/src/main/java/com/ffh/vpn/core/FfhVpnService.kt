@@ -1,6 +1,7 @@
 package com.ffh.vpn.core
 
 import android.app.Notification
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -13,20 +14,32 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.ffh.vpn.R
+import com.ffh.vpn.core.xray.HostResolver
+import com.ffh.vpn.core.xray.OutboundDial
+import com.ffh.vpn.core.xray.XrayConfigBuilder
 import com.ffh.vpn.data.AppRepository
 import com.ffh.vpn.data.LogStore
-import com.ffh.vpn.core.xray.XrayConfigBuilder
+import com.ffh.vpn.data.model.ServerProfile
 import com.ffh.vpn.ui.MainActivity
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 class FfhVpnService : VpnService() {
 
     private var tunnel: ParcelFileDescriptor? = null
+    private val generation = AtomicInteger(0)
+    private val stopping = AtomicBoolean(false)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_DISCONNECT -> stopTunnel()
             ACTION_CONNECT -> startTunnel()
-            else -> Unit
+            else -> {
+                if (VpnStateHolder.state.value.status != VpnStatus.CONNECTED) {
+                    runCatching { ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE) }
+                    stopSelf()
+                }
+            }
         }
         return START_STICKY
     }
@@ -45,22 +58,19 @@ class FfhVpnService : VpnService() {
     // ------------------------------------------------------------------ start
 
     private fun startTunnel() {
+        val gen = generation.incrementAndGet()
+        stopping.set(false)
+        // Must happen before any DNS or process work: a foreground service that
+        // does not call startForeground within a few seconds is killed.
+        ensureForeground(getString(R.string.notification_connecting))
+
         val server = AppRepository.selectedServer
         if (server == null) {
-            VpnStateHolder.update { it.copy(status = VpnStatus.ERROR, message = "no server selected") }
-            stopSelf()
+            fail(gen, "no server selected")
             return
         }
         if (!server.isSupported) {
-            VpnStateHolder.update {
-                it.copy(
-                    status = VpnStatus.ERROR,
-                    serverId = server.id,
-                    serverName = server.displayName(),
-                    message = "protocol is not supported by Xray"
-                )
-            }
-            stopSelf()
+            fail(gen, "protocol is not supported by Xray")
             return
         }
 
@@ -74,46 +84,79 @@ class FfhVpnService : VpnService() {
             )
         }
 
-        val config = runCatching { XrayConfigBuilder.build(server, AppRepository.settings()) }
-            .getOrElse {
-                VpnStateHolder.update { it.copy(status = VpnStatus.ERROR, message = it.message ?: "config error") }
-                LogStore.append("vpn", "config error: ${it.message}")
-                stopSelf()
-                return
+        Thread {
+            if (generation.get() != gen) return@Thread
+            val prepared = prepareServer(server)
+            val config = runCatching { XrayConfigBuilder.build(prepared, AppRepository.settings()) }
+                .getOrElse {
+                    LogStore.append("vpn", "config error: ${it.message}")
+                    fail(gen, "config error")
+                    return@Thread
+                }
+            if (generation.get() != gen) return@Thread
+
+            val fd = establish()
+            if (fd == null) {
+                fail(gen, "vpn interface failed")
+                return@Thread
+            }
+            if (generation.get() != gen) {
+                closeTunnel()
+                return@Thread
             }
 
-        val fd = establish()
-        if (fd == null) {
-            VpnStateHolder.update { it.copy(status = VpnStatus.ERROR, message = "vpn interface failed") }
-            stopSelf()
-            return
+            XrayProcess.onUnexpectedExit = { code ->
+                if (!stopping.get() && generation.get() == gen) {
+                    fail(gen, "core exited ($code)")
+                }
+            }
+            if (!XrayProcess.start(this, config, fd)) {
+                fail(gen, "core failed to start")
+                return@Thread
+            }
+
+            // The core can die immediately when the TUN fd is rejected. Don't
+            // tell the user they are connected until it has stayed up.
+            Thread.sleep(700)
+            if (generation.get() != gen) return@Thread
+            if (!XrayProcess.isRunning) {
+                fail(gen, "core exited during startup")
+                return@Thread
+            }
+
+            VpnStateHolder.update {
+                it.copy(status = VpnStatus.CONNECTED, startedAt = System.currentTimeMillis(), message = null)
+            }
+            notify(prepared.displayName(), getString(R.string.notification_connected))
+            LogStore.append("vpn", "connected to ${prepared.displayName()}")
+        }.also { it.name = "ffh-vpn-start"; it.isDaemon = true; it.start() }
+    }
+
+    /** Dials the server by IP so the core does not need DNS to open the uplink. */
+    private fun prepareServer(server: ServerProfile): ServerProfile {
+        val outbound = server.outbound ?: return server
+        val host = OutboundDial.hostOf(outbound) ?: return server
+        if (OutboundDial.isIp(host)) return server
+        val ip = HostResolver.resolveV4(host)
+        if (ip == null) {
+            LogStore.append("vpn", "could not resolve $host, core will use the system resolver")
+            return server
         }
+        LogStore.append("vpn", "resolved $host -> $ip")
+        return server.copy(outbound = OutboundDial.rewrite(outbound, ip))
+    }
 
-        if (!XrayProcess.start(this, config, fd)) {
-            VpnStateHolder.update { it.copy(status = VpnStatus.ERROR, message = "core failed to start") }
-            runCatching { tunnel?.close() }
-            tunnel = null
-            stopSelf()
-            return
-        }
-
-        runCatching {
-            ServiceCompat.startForeground(
-                this,
-                Notifications.ID_VPN,
-                buildNotification(server.displayName(), getString(R.string.notification_connecting)),
-                if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0
-            )
-        }.onFailure { LogStore.append("vpn", "foreground failed: ${it.message}") }
-
+    private fun fail(gen: Int, message: String) {
+        if (!generation.compareAndSet(gen, gen + 1)) return
+        LogStore.append("vpn", message)
+        XrayProcess.onUnexpectedExit = null
+        XrayProcess.stop()
+        closeTunnel()
         VpnStateHolder.update {
-            it.copy(
-                status = VpnStatus.CONNECTED,
-                startedAt = System.currentTimeMillis(),
-                message = null
-            )
+            it.copy(status = VpnStatus.ERROR, message = message)
         }
-        LogStore.append("vpn", "connected to ${server.displayName()}")
+        runCatching { ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE) }
+        stopSelf()
     }
 
     // ------------------------------------------------------------------- tun
@@ -126,35 +169,49 @@ class FfhVpnService : VpnService() {
             .addAddress(TUN_IPV4, TUN_PREFIX)
             .addRoute("0.0.0.0", 0)
 
-        val dns = settings.dnsServers.map { it.trim() }.filter { it.isNotEmpty() && !it.contains("://") }
-        (dns.firstOrNull() ?: "1.1.1.1").let { runCatching { builder.addDnsServer(it) } }
-
-        if (settings.enableIpv6) {
-            runCatching {
-                builder.addAddress(TUN_IPV6, 64)
-                builder.addRoute("::", 0)
-            }
+        // Always capture IPv6. Without the route, a dual-stack phone sends
+        // IPv6 around the tunnel and apps that prefer it look completely dead.
+        runCatching {
+            builder.addAddress(TUN_IPV6, 64)
+            builder.addRoute("::", 0)
         }
 
-        if (settings.excludeSelf) {
+        val dns = settings.dnsServers.map { it.trim() }.filter { it.isNotEmpty() && !it.contains("://") && !it.contains("/") }
+        if (dns.isEmpty()) {
+            runCatching { builder.addDnsServer("1.1.1.1") }
+        } else {
+            dns.forEach { runCatching { builder.addDnsServer(it) } }
+        }
+
+        // The core is a child of this app. If the app's own sockets enter the
+        // tunnel they loop forever and nothing on the phone can connect.
+        // include-mode already excludes every package that is not listed, and
+        // Android rejects mixing allow and disallow lists. An empty include
+        // list would capture the app too, so it is treated as "everyone else".
+        val included = settings.perAppPackages.filter { it != packageName }
+        val includeMode = settings.perAppMode == "include" && included.isNotEmpty()
+        if (!includeMode) {
             runCatching { builder.addDisallowedApplication(packageName) }
+                .onFailure { LogStore.append("vpn", "cannot exclude the app: ${it.message}") }
+        }
+        if (includeMode) {
+            included.forEach { runCatching { builder.addAllowedApplication(it) } }
+        } else if (settings.perAppMode == "exclude") {
+            included.forEach { runCatching { builder.addDisallowedApplication(it) } }
         }
 
-        when (settings.perAppMode) {
-            "include" -> settings.perAppPackages.filter { it != packageName }.forEach {
-                runCatching { builder.addAllowedApplication(it) }
-            }
-
-            "exclude" -> settings.perAppPackages.filter { it != packageName }.forEach {
-                runCatching { builder.addDisallowedApplication(it) }
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            runCatching { builder.setMetered(false) }
         }
 
-        val pfd = runCatching { builder.establish() }.getOrNull() ?: return null
+        val pfd = runCatching { builder.establish() }.getOrElse {
+            LogStore.append("vpn", "establish failed: ${it.message}")
+            null
+        } ?: return null
         tunnel = pfd
 
-        // The file descriptor has to survive the exec() of the core process,
-        // so FD_CLOEXEC must be cleared before it is handed over.
+        // Inherited by fork(); CLOEXEC would drop it on exec inside the child
+        // only if the launcher forgot to dup it. Cleared here as well.
         runCatching {
             val flags = Os.fcntlInt(pfd.fileDescriptor, OsConstants.F_GETFD, 0)
             if (flags and OsConstants.FD_CLOEXEC != 0) {
@@ -168,16 +225,40 @@ class FfhVpnService : VpnService() {
     // ------------------------------------------------------------------- stop
 
     fun stopTunnel() {
+        generation.incrementAndGet()
+        stopping.set(true)
+        XrayProcess.onUnexpectedExit = null
         VpnStateHolder.update { it.copy(status = VpnStatus.DISCONNECTING) }
         XrayProcess.stop()
-        runCatching { tunnel?.close() }
-        tunnel = null
+        closeTunnel()
         runCatching { ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE) }
         VpnStateHolder.update { VpnState(status = VpnStatus.DISCONNECTED) }
         stopSelf()
     }
 
+    private fun closeTunnel() {
+        runCatching { tunnel?.close() }
+        tunnel = null
+    }
+
     // ----------------------------------------------------------- notification
+
+    private fun ensureForeground(text: String) {
+        val name = VpnStateHolder.state.value.serverName ?: getString(R.string.app_name)
+        runCatching {
+            ServiceCompat.startForeground(
+                this,
+                Notifications.ID_VPN,
+                buildNotification(name, text),
+                if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0
+            )
+        }.onFailure { LogStore.append("vpn", "foreground failed: ${it.message}") }
+    }
+
+    private fun notify(title: String, text: String) {
+        val manager = getSystemService(NotificationManager::class.java) ?: return
+        runCatching { manager.notify(Notifications.ID_VPN, buildNotification(title, text)) }
+    }
 
     private fun buildNotification(title: String, text: String): Notification {
         val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT

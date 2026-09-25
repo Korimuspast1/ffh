@@ -1,8 +1,11 @@
 package com.ffh.vpn.core
 
 import android.content.Context
+import android.os.ParcelFileDescriptor
 import com.ffh.vpn.data.LogStore
 import java.io.File
+import java.io.InputStream
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -20,12 +23,19 @@ object XrayProcess {
     private val running = AtomicBoolean(false)
 
     @Volatile
-    private var process: Process? = null
+    private var handle: CoreHandle? = null
 
     @Volatile
     private var reader: Thread? = null
 
-    val isRunning: Boolean get() = running.get()
+    @Volatile
+    private var expectStop = false
+
+    /** Invoked when the tunnel core exits without [stop] being called. */
+    @Volatile
+    var onUnexpectedExit: ((Int) -> Unit)? = null
+
+    val isRunning: Boolean get() = running.get() && (handle?.isAlive() != false)
 
     fun binary(context: Context): File = File(context.applicationInfo.nativeLibraryDir, LIB_NAME)
 
@@ -38,6 +48,13 @@ object XrayProcess {
         val dir = File(context.filesDir, "ffh/assets")
         if (!dir.exists()) dir.mkdirs()
         return dir
+    }
+
+    /** Each latency probe needs its own config file, the tunnel owns the main one. */
+    fun probeConfigFile(context: Context, port: Int): File {
+        val dir = File(context.filesDir, "ffh/probe")
+        if (!dir.exists()) dir.mkdirs()
+        return File(dir, "probe-$port.json")
     }
 
     fun configFile(context: Context): File {
@@ -64,64 +81,112 @@ object XrayProcess {
 
     fun start(context: Context, config: String, tunFd: Int): Boolean {
         stop()
+        expectStop = false
 
         val file = configFile(context)
         file.writeText(config)
         prepareAssets(context)
 
-        val exe = binary(context)
-        if (!exe.exists()) {
-            LogStore.append("core", "xray binary is missing at ${exe.absolutePath}")
+        if (tunFd >= 0 && !CoreLauncher.loaded) {
+            LogStore.append("core", "native launcher is missing, the tunnel fd cannot be passed")
             return false
         }
 
-        return try {
-            val builder = ProcessBuilder(exe.absolutePath, "run", "-c", file.absolutePath)
+        val started = launch(context, file, mapOf("XRAY_TUN_FD" to tunFd.toString(), "xray.tun.fd" to tunFd.toString()), tunFd)
+            ?: return false
+
+        handle = started
+        running.set(true)
+        reader = Thread {
+            runCatching {
+                started.logs.bufferedReader().useLines { lines ->
+                    for (line in lines) LogStore.append("xray", line)
+                }
+            }
+            val code = started.reap()
+            running.set(false)
+            if (!expectStop) {
+                LogStore.append("core", "exited ($code)")
+                onUnexpectedExit?.invoke(code)
+            }
+        }.also { it.isDaemon = true; it.name = "ffh-xray-log"; it.start() }
+        LogStore.append("core", "started pid ${started.pid} tun fd ${started.tunFd}")
+        return true
+    }
+
+    /**
+     * Starts one detached core process. Used by the tunnel and by the
+     * per-server latency probe (which runs several instances in parallel).
+     *
+     * [tunFd] is the VPN interface fd. Pass -1 when the process has no TUN
+     * inbound (the probe).
+     */
+    fun launch(
+        context: Context,
+        configFile: File,
+        extraEnv: Map<String, String> = emptyMap(),
+        tunFd: Int = -1
+    ): CoreHandle? {
+        prepareAssets(context)
+        val exe = binary(context)
+        if (!exe.exists()) {
+            LogStore.append("core", "xray binary is missing at ${exe.absolutePath}")
+            return null
+        }
+
+        val env = LinkedHashMap<String, String>()
+        env.putAll(System.getenv())
+        env["XRAY_LOCATION_ASSET"] = assetsDir(context).absolutePath
+        env["TMPDIR"] = context.cacheDir.absolutePath
+        env.putAll(extraEnv)
+
+        if (CoreLauncher.loaded) {
+            val argv = arrayOf(exe.absolutePath, "run", "-c", configFile.absolutePath)
+            val envp = env.map { (key, value) -> "$key=$value" }.toTypedArray()
+            val result = runCatching {
+                CoreLauncher.spawn(exe.absolutePath, argv, envp, tunFd)
+            }.getOrElse {
+                LogStore.append("core", "spawn threw: ${it.message}")
+                null
+            }
+            if (result == null || result.size < 2 || result[0] <= 0) {
+                LogStore.append("core", "spawn failed (errno ${runCatching { CoreLauncher.lastError() }.getOrDefault(-1)})")
+                return null
+            }
+            return CoreHandle.native(result[0], result[1], if (result.size > 2) result[2] else tunFd)
+        }
+
+        if (tunFd >= 0) {
+            LogStore.append("core", "refusing to start the tunnel without the native launcher")
+            return null
+        }
+        return runCatching {
+            val builder = ProcessBuilder(exe.absolutePath, "run", "-c", configFile.absolutePath)
             builder.directory(File(context.filesDir, "ffh"))
             builder.redirectErrorStream(true)
-            val env = builder.environment()
-            env["XRAY_TUN_FD"] = tunFd.toString()
-            env["XRAY_LOCATION_ASSET"] = assetsDir(context).absolutePath
-            env["XRAY_LOCATION_CONFIG"] = File(context.filesDir, "ffh").absolutePath
-            env["TMPDIR"] = context.cacheDir.absolutePath
-
-            val started = builder.start()
-            process = started
-            running.set(true)
-            reader = Thread {
-                runCatching {
-                    started.inputStream.bufferedReader().useLines { lines ->
-                        for (line in lines) {
-                            LogStore.append("xray", line)
-                        }
-                    }
-                }
-                running.set(false)
-            }.also { it.isDaemon = true; it.start() }
-            LogStore.append("core", "started with tun fd $tunFd")
-            true
-        } catch (t: Throwable) {
-            LogStore.append("core", "failed to start: ${t.message}")
-            false
+            builder.environment().putAll(env)
+            CoreHandle.java(builder.start())
+        }.getOrElse {
+            LogStore.append("core", "failed to start: ${it.message}")
+            null
         }
     }
 
     fun stop() {
-        val current = process ?: run {
+        expectStop = true
+        val current = handle ?: run {
             running.set(false)
             return
         }
         try {
             current.destroy()
-            runCatching {
-                if (!current.waitFor(3, java.util.concurrent.TimeUnit.SECONDS)) {
-                    current.destroyForcibly()
-                }
-            }
+            if (!current.waitFor(2_000)) current.destroyForcibly()
+            current.waitFor(1_000)
+            current.reap()
         } catch (t: Throwable) {
             LogStore.append("core", "stop error: ${t.message}")
         } finally {
-            process = null
+            handle = null
             running.set(false)
             reader?.let { runCatching { it.interrupt() } }
             reader = null
@@ -135,8 +200,71 @@ object XrayProcess {
                 .redirectErrorStream(true)
                 .start()
             val output = process.inputStream.bufferedReader().readText()
-            process.waitFor()
+            process.waitFor(3, TimeUnit.SECONDS)
             output.lineSequence().firstOrNull()?.trim()?.takeIf { it.isNotBlank() } ?: "unknown"
         }.getOrDefault("unknown")
+    }
+}
+
+/** A running core, either spawned natively (tunnel) or via [ProcessBuilder] (probe fallback). */
+class CoreHandle private constructor(
+    val pid: Int,
+    val logs: InputStream,
+    val tunFd: Int,
+    private val nativePid: Boolean,
+    private val javaProcess: Process?
+) {
+    fun isAlive(): Boolean = if (nativePid) {
+        runCatching { CoreLauncher.alive(pid) }.getOrDefault(false)
+    } else {
+        javaProcess?.isAlive == true
+    }
+
+    fun destroy() {
+        if (nativePid) {
+            runCatching { CoreLauncher.signal(pid, SIGTERM) }
+            runCatching { CoreLauncher.signal(-pid, SIGTERM) }
+        } else {
+            javaProcess?.destroy()
+        }
+    }
+
+    fun destroyForcibly() {
+        if (nativePid) {
+            runCatching { CoreLauncher.signal(pid, SIGKILL) }
+            runCatching { CoreLauncher.signal(-pid, SIGKILL) }
+        } else {
+            javaProcess?.destroyForcibly()
+        }
+    }
+
+    fun waitFor(timeoutMs: Long): Boolean {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            if (!isAlive()) return true
+            Thread.sleep(50)
+        }
+        return !isAlive()
+    }
+
+    /** Reaps a native child so it does not stay a zombie. Safe to call twice. */
+    fun reap(): Int {
+        if (!nativePid) {
+            return runCatching { javaProcess?.waitFor() ?: -2 }.getOrDefault(-2)
+        }
+        return runCatching { CoreLauncher.waitPid(pid, true) }.getOrDefault(-2)
+    }
+
+    companion object {
+        private const val SIGTERM = 15
+        private const val SIGKILL = 9
+
+        fun native(pid: Int, logFd: Int, tunFd: Int): CoreHandle {
+            val stream = ParcelFileDescriptor.AutoCloseInputStream(ParcelFileDescriptor.adoptFd(logFd))
+            return CoreHandle(pid, stream, tunFd, nativePid = true, javaProcess = null)
+        }
+
+        fun java(process: Process): CoreHandle =
+            CoreHandle(pid = -1, logs = process.inputStream, tunFd = -1, nativePid = false, javaProcess = process)
     }
 }

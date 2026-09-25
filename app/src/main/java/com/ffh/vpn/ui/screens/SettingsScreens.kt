@@ -33,12 +33,14 @@ import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.NetworkPing
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.Icon
@@ -46,6 +48,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -55,13 +58,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.ffh.vpn.core.QuickTile
+import com.ffh.vpn.core.VpnStateHolder
+import com.ffh.vpn.core.VpnStatus
 import com.ffh.vpn.core.XrayProcess
 import com.ffh.vpn.core.xray.XrayConfigBuilder
 import com.ffh.vpn.data.AppRepository
 import com.ffh.vpn.data.AppSettings
 import com.ffh.vpn.data.LogStore
+import com.ffh.vpn.net.UrlTester
 import com.ffh.vpn.i18n.LocalStrings
 import com.ffh.vpn.ui.components.CardBlock
 import com.ffh.vpn.ui.components.FfhTopBar
@@ -130,6 +138,17 @@ fun SettingsRootScreen(
         SectionHeader(strings.sectionConnection)
         CardBlock(color = LocalFfhPalette.current.serverRowBackgroundColor) {
             Column {
+                val context = LocalContext.current
+                SettingValueRow(
+                    title = strings.addTile,
+                    value = "",
+                    subtitle = strings.tileHint,
+                    icon = Icons.Default.PowerSettingsNew,
+                    onClick = {
+                        QuickTile.request(context, strings.addTileAdded, strings.addTileAlready, strings.addTileManual)
+                    }
+                )
+                Hairline()
                 SettingValueRow(strings.connection, "", icon = Icons.Default.Tune) { onOpen("connection") }
                 Hairline()
                 SettingValueRow(strings.routing, "", icon = Icons.Default.Route) { onOpen("routing") }
@@ -357,9 +376,7 @@ fun ConnectionScreen(
                     onChange(settings.copy(allowLan = it))
                 }
                 Hairline()
-                SettingSwitchRow(strings.excludeSelf, null, null, settings.excludeSelf) {
-                    onChange(settings.copy(excludeSelf = it))
-                }
+                SettingRow(strings.excludeSelf, subtitle = strings.excludeSelfHint)
             }
         }
 
@@ -391,7 +408,7 @@ fun ConnectionScreen(
                     onChange(settings.copy(sniffing = it))
                 }
                 Hairline()
-                SettingSwitchRow(strings.blockQuic, null, null, settings.blockQuic) {
+                SettingSwitchRow(strings.blockQuic, strings.blockQuicHint, null, settings.blockQuic) {
                     onChange(settings.copy(blockQuic = it))
                 }
             }
@@ -712,6 +729,15 @@ fun SubscriptionSettingsScreen(
     val strings = LocalStrings.current
     var autoDialog by remember { mutableStateOf(false) }
     var agentDialog by remember { mutableStateOf(false) }
+    var pingModeDialog by remember { mutableStateOf(false) }
+    var pingUrlDialog by remember { mutableStateOf(false) }
+    var sortDialog by remember { mutableStateOf(false) }
+    val pingModeLabel = if (settings.pingMode == "tcp") strings.pingModeTcp else strings.pingModeProxy
+    val sortLabel = when (settings.serverSort) {
+        "ping" -> strings.sortByPing
+        "name" -> strings.sortByName
+        else -> strings.sortByDefault
+    }
 
     SettingsScaffold(title = strings.subscriptions, onBack = onBack) {
         SectionHeader(strings.sectionSubscriptions)
@@ -742,9 +768,24 @@ fun SubscriptionSettingsScreen(
             }
         }
 
+        SectionHeader(strings.sortServers)
+        CardBlock(color = LocalFfhPalette.current.serverRowBackgroundColor) {
+            Column {
+                SettingValueRow(strings.sortServers, sortLabel) { sortDialog = true }
+            }
+        }
+
         SectionHeader(strings.ping)
         CardBlock(color = LocalFfhPalette.current.serverRowBackgroundColor) {
             Column {
+                SettingValueRow(strings.pingMode, pingModeLabel) { pingModeDialog = true }
+                Hairline()
+                SettingValueRow(
+                    title = strings.pingUrl,
+                    value = settings.pingUrl.take(24),
+                    subtitle = settings.pingUrl
+                ) { pingUrlDialog = true }
+                Hairline()
                 SettingSwitchRow(strings.pingOnUpdate, null, null, settings.pingOnUpdate) {
                     onChange(settings.copy(pingOnUpdate = it))
                 }
@@ -781,6 +822,35 @@ fun SubscriptionSettingsScreen(
             onDismiss = { autoDialog = false }
         )
     }
+    if (pingModeDialog) {
+        OptionsDialog(
+            title = strings.pingMode,
+            options = listOf(
+                strings.pingModeProxy to { onChange(settings.copy(pingMode = "proxy")) },
+                strings.pingModeTcp to { onChange(settings.copy(pingMode = "tcp")) }
+            ),
+            onDismiss = { pingModeDialog = false }
+        )
+    }
+    if (pingUrlDialog) {
+        TextInputDialog(
+            title = strings.pingUrl,
+            initial = settings.pingUrl,
+            confirmText = strings.save,
+            onConfirm = { value ->
+                val url = value.trim().takeIf { it.startsWith("http") } ?: AppSettings().pingUrl
+                onChange(settings.copy(pingUrl = url))
+            },
+            onDismiss = { pingUrlDialog = false }
+        )
+    }
+    if (sortDialog) {
+        SortDialog(
+            current = settings.serverSort,
+            onPick = { mode -> onChange(settings.copy(serverSort = mode)) },
+            onDismiss = { sortDialog = false }
+        )
+    }
     if (agentDialog) {
         TextInputDialog(
             title = strings.userAgent,
@@ -808,6 +878,9 @@ fun CoreScreen(
         value = XrayProcess.version(context)
     }
     var levelDialog by remember { mutableStateOf(false) }
+    var selfTestResult by remember { mutableStateOf<String?>(null) }
+    var selfTesting by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     SettingsScaffold(title = strings.coreTitle, onBack = onBack) {
         SectionHeader(strings.core)
@@ -825,6 +898,40 @@ fun CoreScreen(
                 SettingValueRow(strings.logs, "", icon = Icons.Default.Description, onClick = onOpenLogs)
                 Hairline()
                 SettingValueRow(strings.exportConfig, "", icon = Icons.Default.Link, onClick = onExportConfig)
+                Hairline()
+                SettingValueRow(
+                    title = strings.selfTest,
+                    value = when {
+                        selfTesting -> strings.selfTestRunning
+                        selfTestResult != null -> selfTestResult!!
+                        else -> ""
+                    },
+                    subtitle = when (XrayProcess.isRunning) {
+                        true -> strings.coreRunning
+                        else -> strings.coreStopped
+                    },
+                    icon = Icons.Default.NetworkPing,
+                    onClick = {
+                        if (selfTesting) return@SettingValueRow
+                        scope.launch {
+                            selfTesting = true
+                            selfTestResult = null
+                            val server = AppRepository.selectedServer
+                            selfTestResult = when {
+                                server == null -> strings.noServerSelected
+                                VpnStateHolder.state.value.status != VpnStatus.CONNECTED -> strings.notConnected
+                                else -> {
+                                    val ms = UrlTester.testThroughProxy(settings.socksPort, settings.pingUrl, 8000)
+                                    val text = if (ms == null) strings.selfTestFailed
+                                    else "${strings.selfTestOk} · $ms ${strings.ms}"
+                                    LogStore.append("selftest", text)
+                                    text
+                                }
+                            }
+                            selfTesting = false
+                        }
+                    }
+                )
             }
         }
     }

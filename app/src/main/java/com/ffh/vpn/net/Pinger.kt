@@ -12,8 +12,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.net.InetSocketAddress
+import java.net.Proxy
 import java.net.Socket
+import java.util.concurrent.TimeUnit
 
 /**
  * Real latency measurements: a TCP connect to the server endpoint, repeated a
@@ -90,22 +94,41 @@ object Pinger {
     }
 }
 
-/** Measures the real round trip through the running tunnel (URL test). */
+/** Measures the real round trip of an HTTP request through a local proxy. */
 object UrlTester {
+
+    /** Sends one GET through a SOCKS5 proxy (the per-server probe). */
+    suspend fun getThroughSocks(proxyPort: Int, url: String, timeoutMs: Int = 4000): Boolean =
+        withContext(Dispatchers.IO) {
+            val client = client(Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", proxyPort)), timeoutMs)
+            try {
+                client.newCall(Request.Builder().url(url).get().build()).use { response ->
+                    response.body?.close()
+                    response.isSuccessful || response.code == 204 || response.code in 300..399
+                }
+            } catch (t: Throwable) {
+                false
+            } finally {
+                client.dispatcher.executorService.shutdown()
+            }
+        }
+
+    private fun client(proxy: Proxy, timeoutMs: Int): OkHttpClient = OkHttpClient.Builder()
+        .proxy(proxy)
+        .connectTimeout(timeoutMs.toLong(), TimeUnit.MILLISECONDS)
+        .readTimeout(timeoutMs.toLong(), TimeUnit.MILLISECONDS)
+        .callTimeout((timeoutMs * 2).toLong(), TimeUnit.MILLISECONDS)
+        .followRedirects(false)
+        .build()
 
     suspend fun testThroughProxy(proxyPort: Int, url: String, timeoutMs: Int = 8000): Long? =
         withContext(Dispatchers.IO) {
-            val client = okhttp3.OkHttpClient.Builder()
-                .proxy(java.net.Proxy(java.net.Proxy.Type.HTTP, InetSocketAddress("127.0.0.1", proxyPort)))
-                .connectTimeout(timeoutMs.toLong(), java.util.concurrent.TimeUnit.MILLISECONDS)
-                .readTimeout(timeoutMs.toLong(), java.util.concurrent.TimeUnit.MILLISECONDS)
-                .build()
-            val request = okhttp3.Request.Builder().url(url).get().build()
+            val client = client(Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", proxyPort)), timeoutMs)
             try {
                 val started = System.nanoTime()
-                client.newCall(request).execute().use { response ->
+                client.newCall(Request.Builder().url(url).get().build()).use { response ->
                     response.body?.close()
-                    if (!response.isSuccessful) return@withContext null
+                    if (!(response.isSuccessful || response.code == 204)) return@withContext null
                     (System.nanoTime() - started) / 1_000_000L
                 }
             } catch (t: Throwable) {

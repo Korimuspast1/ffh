@@ -11,7 +11,7 @@ on:
       xray_version:
         description: "Xray-core release tag"
         required: false
-        default: "v26.3.27"
+        default: "v26.9.9"
 
 permissions:
   contents: write
@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 90
     env:
       GRADLE_VERSION: "8.11.1"
-      XRAY_VERSION: ${{ github.event.inputs.xray_version || 'v26.3.27' }}
+      XRAY_VERSION: ${{ github.event.inputs.xray_version || 'v26.9.9' }}
 
     steps:
       - name: Checkout
@@ -82,7 +82,8 @@ jobs:
           echo "sdk.dir=$SDK" > local.properties
           yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK" --licenses > /dev/null 2>&1 || true
           "$SDK/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK" \
-            "platform-tools" "platforms;android-35" "build-tools;35.0.0" 2>&1 | tail -5
+            "platform-tools" "platforms;android-35" "build-tools;35.0.0" \
+            "ndk;27.2.12479018" "cmake;3.22.1" 2>&1 | tail -8
 
       - name: Fetch Xray core
         id: xray

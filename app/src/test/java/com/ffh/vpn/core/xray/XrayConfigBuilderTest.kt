@@ -143,8 +143,21 @@ class XrayConfigBuilderTest {
         val profile = LinkParser.parse(vlessLink)!!
         val dns = config(profile, AppSettings(dnsServers = listOf("1.1.1.1", "https://dns.google/dns-query")))
             .obj("dns").array("servers")
-        assertEquals("1.1.1.1", (dns[0] as JsonPrimitive).content)
-        assertEquals("https://dns.google/dns-query", dns[1].jsonObject["address"]?.jsonPrimitive?.content)
+        val plain = dns.first { it is JsonPrimitive }.jsonPrimitive.content
+        assertEquals("1.1.1.1", plain)
+        val doh = dns.first { it is JsonObject && it.jsonObject["address"]?.jsonPrimitive?.content?.startsWith("https://") == true }
+        assertEquals("https://dns.google/dns-query", doh.jsonObject["address"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun `server domain is resolved by the system resolver so the tunnel can connect`() {
+        val profile = LinkParser.parse(vlessLink)!!
+        val servers = config(profile).obj("dns").array("servers")
+        val bootstrap = servers.first {
+            it is JsonObject && it.jsonObject["address"]?.jsonPrimitive?.content == "localhost"
+        }.jsonObject
+        val domains = bootstrap.array("domains").map { it.jsonPrimitive.content }
+        assertTrue(domains.contains("full:example.com"))
     }
 
     @Test

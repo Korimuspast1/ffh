@@ -5,5 +5,7 @@
     <string name="notification_channel_updates">Subscription updates</string>
     <string name="notification_channel_updates_desc">Notifications about subscription updates</string>
     <string name="notification_connecting">Connecting…</string>
+    <string name="notification_connected">Connected</string>
     <string name="notification_action_disconnect">Disconnect</string>
+    <string name="tile_label" translatable="false">FFH VPN</string>
 </resources>

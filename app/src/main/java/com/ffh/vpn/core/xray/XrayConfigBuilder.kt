@@ -31,13 +31,14 @@ object XrayConfigBuilder {
 
     fun build(server: ServerProfile, settings: AppSettings): String {
         val outbound = server.outbound ?: error("server has no outbound")
+        val dialHost = OutboundDial.hostOf(outbound) ?: server.address
 
         val root = buildJsonObject {
             putJsonObject("log") {
                 put("loglevel", settings.logLevel)
                 put("access", "")
             }
-            put("dns", buildDns(settings))
+            put("dns", buildDns(settings, dialHost))
             putJsonArray("inbounds") {
                 add(buildTunInbound(settings))
                 if (settings.socksEnabled) add(buildSocksInbound(settings))
@@ -82,8 +83,18 @@ object XrayConfigBuilder {
         return pretty.encodeToString(root)
     }
 
-    private fun buildDns(settings: AppSettings): JsonObject = buildJsonObject {
+    private fun buildDns(settings: AppSettings, dialHost: String): JsonObject = buildJsonObject {
         putJsonArray("servers") {
+            // The server name is resolved by the system resolver (the app is
+            // excluded from the tunnel) so connecting cannot deadlock on a DNS
+            // query that would have to travel through the tunnel itself.
+            if (dialHost.isNotBlank() && !OutboundDial.isIp(dialHost)) {
+                add(buildJsonObject {
+                    put("address", "localhost")
+                    putJsonArray("domains") { add("full:$dialHost") }
+                    put("skipFallback", true)
+                })
+            }
             for (server in settings.dnsServers.map { it.trim() }.filter { it.isNotEmpty() }) {
                 if (server.startsWith("https://") || server.startsWith("tcp://") || server.startsWith("quic://")) {
                     add(buildJsonObject {
@@ -103,10 +114,14 @@ object XrayConfigBuilder {
 
     private fun buildTunInbound(settings: AppSettings): JsonObject = buildJsonObject {
         put("tag", "tun-in")
+        put("port", 0)
         put("protocol", "tun")
         putJsonObject("settings") {
             put("name", TUN_NAME)
             put("mtu", settings.tunMtu)
+            // Do not set autoOutboundsInterface: on Android that asks the TUN
+            // fd for an interface index, which VpnService does not support, and
+            // the inbound fails to start.
         }
         if (settings.sniffing) {
             putJsonObject("sniffing") {

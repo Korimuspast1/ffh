@@ -40,6 +40,18 @@ class DefaultsTest {
     }
 
     @Test
+    fun `old settings stop blocking quic once`() {
+        val saved = AppSettings(settingsRevision = 0, blockQuic = true, socksPort = 10999)
+        val migrated = saved.migrated()
+        assertEquals(false, migrated.blockQuic)
+        assertEquals(10999, migrated.socksPort)
+        assertEquals(true, migrated.migrated().blockQuic.not())
+        assertEquals(AppSettings.CURRENT_REVISION, migrated.settingsRevision)
+        // a later explicit choice is kept
+        assertEquals(true, migrated.copy(blockQuic = true).migrated().blockQuic)
+    }
+
+    @Test
     fun `theme defaults can be constructed`() {
         assertNotNull(AppThemeSpec.DEFAULT)
         assertEquals("#000000FF", AppThemeSpec.DEFAULT.backgroundColors.first())

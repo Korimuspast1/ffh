@@ -29,7 +29,9 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,16 +43,19 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.ffh.vpn.core.QuickTile
 import com.ffh.vpn.core.VpnState
 import com.ffh.vpn.core.VpnStatus
 import com.ffh.vpn.data.AppSettings
 import com.ffh.vpn.data.model.ServerProfile
 import com.ffh.vpn.data.model.Subscription
+import com.ffh.vpn.data.model.sortedWithMode
 import com.ffh.vpn.i18n.LocalStrings
 import com.ffh.vpn.ui.Format
 import com.ffh.vpn.ui.components.IconAction
@@ -75,14 +80,16 @@ fun HomeScreen(
     onServerOptions: (ServerProfile) -> Unit,
     onPowerClick: () -> Unit,
     onOpenHomepage: (String) -> Unit,
-    onOpenSupport: () -> Unit
+    onOpenSupport: () -> Unit,
+    onSort: () -> Unit
 ) {
     val strings = LocalStrings.current
     val palette = LocalFfhPalette.current
+    val context = LocalContext.current
 
     val selectedSub = subscriptions.firstOrNull { it.id == settings.selectedSubscriptionId }
         ?: subscriptions.firstOrNull()
-    val servers = selectedSub?.servers ?: emptyList()
+    val servers = (selectedSub?.servers ?: emptyList()).sortedWithMode(settings.serverSort)
 
     FfhBackground(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -108,6 +115,15 @@ fun HomeScreen(
                         { onOpenHomepage(selectedSub.homepage!!) }
                     )
                 }
+                IconAction(
+                    Icons.Default.PowerSettingsNew,
+                    strings.addTile,
+                    palette.topBarButtonsColor,
+                    onClick = {
+                        QuickTile.request(context, strings.addTileAdded, strings.addTileAlready, strings.addTileManual)
+                    }
+                )
+                IconAction(Icons.Default.Sort, strings.sortServers, palette.topBarButtonsColor, onSort)
                 IconAction(Icons.Default.Settings, strings.settings, palette.topBarButtonsColor, onOpenSettings)
             }
 
