@@ -12,6 +12,7 @@ class FfhApp : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        com.ffh.vpn.data.AppRepository.init(this)
         createChannels()
     }
 
