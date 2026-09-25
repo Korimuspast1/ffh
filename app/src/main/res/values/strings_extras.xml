@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_vpn">VPN status</string>
+    <string name="notification_channel_vpn_desc">Current state of the tunnel</string>
+    <string name="notification_channel_updates">Subscription updates</string>
+    <string name="notification_channel_updates_desc">Notifications about subscription updates</string>
+</resources>

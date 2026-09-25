@@ -1,0 +1,21 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+.kotlin
+
+# Native core binaries are produced by CI (see .github/scripts/fetch-xray.sh)
+app/src/main/jniLibs/
+app/src/main/assets/geoip.dat
+app/src/main/assets/geosite.dat
+
+# Signature files must never be committed
+*.jks
+*.keystore
+keystore.properties

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Power glyph: stroked circle with a gap on top + vertical bar -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,30 A24,24 0 1 1 53.98,30"
+        android:strokeWidth="7"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:trimPathEnd="0.94"
+        android:trimPathStart="0.06" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,24 L54,52"
+        android:strokeWidth="7"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+</vector>
