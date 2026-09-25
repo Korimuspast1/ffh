@@ -212,13 +212,14 @@ class SubscriptionParserTest {
             "vless://11111111-1111-1111-1111-111111111111@a.example.com:443#One",
             "trojan://pass@b.example.com:443#Two",
             "",
-            "# comment",
+            "#comment",
             "trojan://broken"
         ).joinToString("\n")
 
         val result = SubscriptionParser.parseBody(body, "sub")
         assertEquals(2, result.servers.size)
         assertEquals(1, result.skipped)
+        assertEquals(com.ffh.vpn.data.parse.SubscriptionParser.Kind.LINKS, result.kind)
         assertEquals("One", result.servers[0].remark)
         assertEquals("Two", result.servers[1].remark)
     }
