@@ -102,14 +102,19 @@ jobs:
       - name: Generate Gradle wrapper
         id: wrapper
         continue-on-error: true
-        run: gradle wrapper --gradle-version "$GRADLE_VERSION" --distribution-type bin 2>&1 | tail -20
+        run: |
+          gradle wrapper --gradle-version "$GRADLE_VERSION" --distribution-type bin 2>&1 | tee -a dist/build.log | tail -40
+          echo "--- wrapper files ---" >> dist/build.log
+          ls -la gradle/wrapper 2>&1 | tee -a dist/build.log
 
       - name: Build
         id: gradle
         continue-on-error: true
         run: |
           set -o pipefail
-          ./gradlew --no-daemon --stacktrace --console=plain \
+          if [ -x ./gradlew ]; then GRADLE_CMD=./gradlew; else GRADLE_CMD=gradle; fi
+          echo "== using $GRADLE_CMD" >> dist/build.log
+          $GRADLE_CMD --no-daemon --stacktrace --console=plain \
             :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease 2>&1 | tee -a dist/build.log
 
       - name: Collect artifacts
