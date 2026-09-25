@@ -18,9 +18,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import java.io.File
 import java.util.UUID
 
+@Serializable
 data class AppState(
     val subscriptions: List<Subscription> = emptyList(),
     val settings: AppSettings = AppSettings()
