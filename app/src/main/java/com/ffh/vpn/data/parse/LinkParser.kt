@@ -3,6 +3,8 @@ package com.ffh.vpn.data.parse
 import com.ffh.vpn.data.model.Protocol
 import com.ffh.vpn.data.model.ServerProfile
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

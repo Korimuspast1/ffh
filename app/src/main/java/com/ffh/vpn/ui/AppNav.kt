@@ -198,7 +198,11 @@ fun AppNav(
             }
         )
 
-        is Screen.Info -> subscriptionForInfo?.let { sub ->
+        is Screen.Info -> {
+            val sub = subscriptionForInfo
+            if (sub == null) {
+                LaunchedEffect(Unit) { pop() }
+            } else {
             SubscriptionInfoScreen(
                 subscription = sub,
                 settings = settings,
@@ -217,8 +221,7 @@ fun AppNav(
                 onShare = { onShareText(sub.url ?: AppRepository.buildExportLinks(sub)) },
                 onOpenHomepage = onOpenUrl
             )
-        } ?: run {
-            LaunchedEffect(Unit) { pop() }
+            }
         }
 
         Screen.SettingsRoot -> SettingsRootScreen(
