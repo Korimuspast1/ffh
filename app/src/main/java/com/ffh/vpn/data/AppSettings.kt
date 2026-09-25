@@ -69,7 +69,8 @@ data class AppSettings(
     val selectedServerId: String? = null
 ) {
     companion object {
-        val DEFAULT = AppSettings()
+        /** Lazily built: the defaults below are members of this companion. */
+        val DEFAULT: AppSettings by lazy { AppSettings() }
 
         val DEFAULT_DNS = listOf("1.1.1.1", "8.8.8.8", "9.9.9.9")
 

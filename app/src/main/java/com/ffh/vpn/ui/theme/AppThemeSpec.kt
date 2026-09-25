@@ -107,7 +107,7 @@ data class AppThemeSpec(
         val DEFAULT_ELIPSE_COLORS = listOf("#161616FF", "#090909FF", "#000000FF")
 
         /** The theme the app starts with: pure black, white accents, no gradient. */
-        val DEFAULT = AppThemeSpec()
+        val DEFAULT: AppThemeSpec by lazy { AppThemeSpec() }
     }
 }
 
@@ -239,7 +239,7 @@ data class FfhPalette(
     val hairline: Color get() = serverRowSubTitleTextColor.copy(alpha = 0.18f)
 
     companion object {
-        val DEFAULT: FfhPalette = AppThemeSpec.DEFAULT.toPalette()
+        val DEFAULT: FfhPalette by lazy { AppThemeSpec.DEFAULT.toPalette() }
     }
 }
 
