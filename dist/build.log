@@ -1,8 +1,8 @@
 FFH VPN build log
-run:      14 (c3e4e4f8e7f05bec8cfce7e0e678664b42e97e1e)
+run:      15 (e2c2dccb9dd471539811247bc7754207ad4960a1)
 xray:     v26.9.9
 gradle:   8.11.1
-date:     2026-09-25T11:53:48Z
+date:     2026-09-25T12:29:18Z
 ==> Xray-core v26.9.9
     downloading Xray-android-arm64-v8a.zip
     arm64-v8a <- xray 38M
@@ -12,10 +12,10 @@ date:     2026-09-25T11:53:48Z
     /home/runner/work/ffh/ffh/app/src/main/jniLibs/x86_64/libxray.so (41654232 bytes)
     /home/runner/work/ffh/ffh/app/src/main/jniLibs/arm64-v8a/libxray.so (39042584 bytes)
     total 27440
-    drwxr-xr-x 2 runner runner     4096 Sep 25 11:54 .
-    drwxr-xr-x 7 runner runner     4096 Sep 25 11:54 ..
-    -rw-r--r-- 1 runner runner 17120329 Sep 25 11:54 geoip.dat
-    -rw-r--r-- 1 runner runner 10968988 Sep 25 11:54 geosite.dat
+    drwxr-xr-x 2 runner runner     4096 Sep 25 12:30 .
+    drwxr-xr-x 7 runner runner     4096 Sep 25 12:30 ..
+    -rw-r--r-- 1 runner runner 17120329 Sep 25 12:30 geoip.dat
+    -rw-r--r-- 1 runner runner 10968988 Sep 25 12:30 geosite.dat
 
 Welcome to Gradle 8.11.1!
 
@@ -24,14 +24,14 @@ Here are the highlights of this release:
 Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :wrapper
 
-BUILD SUCCESSFUL in 1m 4s
+BUILD SUCCESSFUL in 50s
 1 actionable task: 1 executed
 --- wrapper files ---
 total 56
-drwxr-xr-x 2 runner runner  4096 Sep 25 11:53 .
-drwxr-xr-x 3 runner runner  4096 Sep 25 11:53 ..
--rw-r--r-- 1 runner runner 43583 Sep 25 11:55 gradle-wrapper.jar
--rw-r--r-- 1 runner runner   253 Sep 25 11:55 gradle-wrapper.properties
+drwxr-xr-x 2 runner runner  4096 Sep 25 12:29 .
+drwxr-xr-x 3 runner runner  4096 Sep 25 12:29 ..
+-rw-r--r-- 1 runner runner 43583 Sep 25 12:31 gradle-wrapper.jar
+-rw-r--r-- 1 runner runner   253 Sep 25 12:31 gradle-wrapper.properties
 == using ./gradlew
 Downloading https://services.gradle.org/distributions/gradle-8.11.1-bin.zip
 .............10%.............20%.............30%.............40%.............50%.............60%.............70%.............80%.............90%.............100%
@@ -53,8 +53,8 @@ Daemon will be stopped at the end of the build
 > Task :app:processDebugMainManifest
 > Task :app:processDebugManifest
 > Task :app:preDebugUnitTestBuild UP-TO-DATE
-> Task :app:javaPreCompileDebug
 > Task :app:processDebugManifestForPackage
+> Task :app:javaPreCompileDebug
 > Task :app:javaPreCompileDebugUnitTest
 > Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :app:mergeDebugShaders
@@ -63,14 +63,14 @@ Daemon will be stopped at the end of the build
 > Task :app:mergeDebugAssets
 > Task :app:desugarDebugFileDependencies
 > Task :app:processDebugResources
-> Task :app:compressDebugAssets
 > Task :app:checkDebugDuplicateClasses
+> Task :app:compressDebugAssets
 > Task :app:compileDebugKotlin
 > Task :app:mergeExtDexDebug
 
 > Task :app:compileDebugKotlin
 w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/core/FfhTileService.kt:141:17 'fun startActivityAndCollapse(p0: Intent!): Unit' is deprecated. Deprecated in Java.
-w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/core/xray/XrayProbe.kt:93:16 Redundant creation of Json format. Creating instances for each usage can be slow.
+w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/core/xray/XrayProbe.kt:110:16 Redundant creation of Json format. Creating instances for each usage can be slow.
 w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/AppLocale.kt:21:27 'fun updateConfiguration(p0: Configuration!, p1: DisplayMetrics!): Unit' is deprecated. Deprecated in Java.
 w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/components/Components.kt:83:38 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
 w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/HomeScreen.kt:108:42 'val Icons.Filled.Help: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Help.
@@ -80,22 +80,22 @@ w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/theme/FfhTh
 w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/theme/FfhTheme.kt:88:20 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
 
 > Task :app:compileDebugJavaWithJavac
-> Task :app:bundleDebugClassesToCompileJar
-> Task :app:processDebugJavaRes
 > Task :app:bundleDebugClassesToRuntimeJar
-> Task :app:compileDebugUnitTestKotlin
+> Task :app:processDebugJavaRes
+> Task :app:bundleDebugClassesToCompileJar
 > Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics
+> Task :app:compileDebugUnitTestKotlin
 > Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
 > Task :app:processDebugUnitTestJavaRes
+> Task :app:mergeDebugJavaResource
 > Task :app:testDebugUnitTest
-> Task :app:mergeDebugGlobalSynthetics
 > Task :app:mergeLibDexDebug
 > Task :app:mergeProjectDexDebug
 > Task :app:configureCMakeDebug[arm64-v8a]
 > Task :app:buildCMakeDebug[arm64-v8a]
 > Task :app:configureCMakeDebug[x86_64]
 > Task :app:buildCMakeDebug[x86_64]
-> Task :app:mergeDebugJavaResource
 > Task :app:mergeDebugJniLibFolders
 > Task :app:mergeDebugNativeLibs
 > Task :app:validateSigningDebug
@@ -111,33 +111,33 @@ w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/theme/FfhTh
 > Task :app:buildKotlinToolingMetadata
 > Task :app:generateReleaseBuildConfig
 > Task :app:checkReleaseAarMetadata
-> Task :app:generateReleaseResValues FROM-CACHE
 > Task :app:checkReleaseDuplicateClasses
+> Task :app:generateReleaseResValues FROM-CACHE
 > Task :app:mapReleaseSourceSetPaths
 > Task :app:generateReleaseResources
 > Task :app:mergeReleaseNativeLibs
 > Task :app:packageReleaseResources
+> Task :app:parseReleaseLocalResources FROM-CACHE
+> Task :app:createReleaseCompatibleScreenManifests
+> Task :app:extractDeepLinksRelease FROM-CACHE
+> Task :app:processReleaseMainManifest
 > Task :app:stripReleaseDebugSymbols
 > Task :app:packageDebug
 > Task :app:createDebugApkListingFileRedirect
 > Task :app:assembleDebug
-> Task :app:parseReleaseLocalResources FROM-CACHE
-> Task :app:createReleaseCompatibleScreenManifests
-> Task :app:extractDeepLinksRelease FROM-CACHE
-> Task :app:extractReleaseNativeSymbolTables
-> Task :app:processReleaseMainManifest
+> Task :app:mergeReleaseResources
 > Task :app:processReleaseManifest
-> Task :app:mergeReleaseNativeDebugMetadata
 > Task :app:javaPreCompileRelease FROM-CACHE
+> Task :app:extractReleaseNativeSymbolTables
 > Task :app:mergeReleaseArtProfile
 > Task :app:extractProguardFiles
 > Task :app:processReleaseManifestForPackage
+> Task :app:mergeReleaseNativeDebugMetadata
 > Task :app:mergeReleaseStartupProfile
 > Task :app:mergeReleaseShaders
 > Task :app:compileReleaseShaders NO-SOURCE
 > Task :app:generateReleaseAssets UP-TO-DATE
 > Task :app:mergeReleaseAssets
-> Task :app:mergeReleaseResources
 > Task :app:extractReleaseVersionControlInfo
 > Task :app:collectReleaseDependencies
 > Task :app:sdkReleaseDependencyData
@@ -150,7 +150,7 @@ w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/theme/FfhTh
 
 > Task :app:compileReleaseKotlin
 w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/core/FfhTileService.kt:141:17 'fun startActivityAndCollapse(p0: Intent!): Unit' is deprecated. Deprecated in Java.
-w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/core/xray/XrayProbe.kt:93:16 Redundant creation of Json format. Creating instances for each usage can be slow.
+w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/core/xray/XrayProbe.kt:110:16 Redundant creation of Json format. Creating instances for each usage can be slow.
 w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/AppLocale.kt:21:27 'fun updateConfiguration(p0: Configuration!, p1: DisplayMetrics!): Unit' is deprecated. Deprecated in Java.
 w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/components/Components.kt:83:38 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
 w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/HomeScreen.kt:108:42 'val Icons.Filled.Help: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Help.
@@ -173,7 +173,7 @@ w: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/theme/FfhTh
 > Task :app:createReleaseApkListingFileRedirect
 > Task :app:assembleRelease
 
-BUILD SUCCESSFUL in 4m 31s
+BUILD SUCCESSFUL in 3m 32s
 99 actionable tasks: 95 executed, 4 from cache
 == unit test results ==
 == dist/app-debug.apk (74M)
@@ -183,27 +183,27 @@ BUILD SUCCESSFUL in 4m 31s
     39552  1981-01-01 01:01   classes2.dex
    103508  1981-01-01 01:01   classes3.dex
     94824  1981-01-01 01:01   classes4.dex
-   120552  1981-01-01 01:01   classes5.dex
+   120036  1981-01-01 01:01   classes5.dex
      4096  1981-01-01 01:01   classes6.dex
-   399496  1981-01-01 01:01   classes7.dex
-    60300  1981-01-01 01:01   classes8.dex
+   402528  1981-01-01 01:01   classes7.dex
+    67080  1981-01-01 01:01   classes8.dex
 == dist/app-release.apk (56M)
-  2730536  1981-01-01 01:01   classes.dex
+  2734140  1981-01-01 01:01   classes.dex
     10096  1981-01-01 01:01   lib/arm64-v8a/libandroidx.graphics.path.so
      7112  1981-01-01 01:01   lib/arm64-v8a/libdatastore_shared_counter.so
-     8520  1981-01-01 01:01   lib/arm64-v8a/libffh.so
+     8880  1981-01-01 01:01   lib/arm64-v8a/libffh.so
  39042584  1981-01-01 01:01   lib/arm64-v8a/libxray.so
     10760  1981-01-01 01:01   lib/x86_64/libandroidx.graphics.path.so
      6224  1981-01-01 01:01   lib/x86_64/libdatastore_shared_counter.so
-     8728  1981-01-01 01:01   lib/x86_64/libffh.so
+     9104  1981-01-01 01:01   lib/x86_64/libffh.so
  41654232  1981-01-01 01:01   lib/x86_64/libxray.so
 == jniLibs
     app/src/main/jniLibs/x86_64/libxray.so (41654232 bytes)
     app/src/main/jniLibs/arm64-v8a/libxray.so (39042584 bytes)
 == dist
-total 132000
-drwxr-xr-x 2 runner runner     4096 Sep 25 12:00 .
-drwxr-xr-x 9 runner runner     4096 Sep 25 11:56 ..
--rw-r--r-- 1 runner runner 76890325 Sep 25 12:00 app-debug.apk
--rw-r--r-- 1 runner runner 58249516 Sep 25 12:00 app-release.apk
--rw-r--r-- 1 runner runner    10917 Sep 25 12:00 build.log
+total 132004
+drwxr-xr-x 2 runner runner     4096 Sep 25 12:34 .
+drwxr-xr-x 9 runner runner     4096 Sep 25 12:31 ..
+-rw-r--r-- 1 runner runner 76894809 Sep 25 12:34 app-debug.apk
+-rw-r--r-- 1 runner runner 58251916 Sep 25 12:34 app-release.apk
+-rw-r--r-- 1 runner runner    10917 Sep 25 12:34 build.log
