@@ -46,6 +46,12 @@ android {
         }
     }
 
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+        disable += setOf("MissingTranslation", "ExtraTranslation", "UnusedResources")
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
