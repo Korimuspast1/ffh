@@ -102,7 +102,7 @@ object UrlTester {
         withContext(Dispatchers.IO) {
             val client = client(Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", proxyPort)), timeoutMs)
             try {
-                client.newCall(Request.Builder().url(url).get().build()).use { response ->
+                client.newCall(Request.Builder().url(url).get().build()).execute().use { response ->
                     response.body?.close()
                     response.isSuccessful || response.code == 204 || response.code in 300..399
                 }
@@ -126,7 +126,7 @@ object UrlTester {
             val client = client(Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", proxyPort)), timeoutMs)
             try {
                 val started = System.nanoTime()
-                client.newCall(Request.Builder().url(url).get().build()).use { response ->
+                client.newCall(Request.Builder().url(url).get().build()).execute().use { response ->
                     response.body?.close()
                     if (!(response.isSuccessful || response.code == 204)) return@withContext null
                     (System.nanoTime() - started) / 1_000_000L

@@ -11,11 +11,11 @@ fun List<ServerProfile>.sortedWithMode(mode: String): List<ServerProfile> = when
     "ping" -> sortedWith(
         compareBy<ServerProfile> { if (it.pingMillis > 0) 0 else 1 }
             .thenBy { if (it.pingMillis > 0) it.pingMillis else 0 }
-            .thenBy(String.CASE_INSENSITIVE_ORDER) { it.displayName() }
+            .thenBy { it.displayName().lowercase() }
     )
 
     "name" -> sortedWith(
-        compareBy<ServerProfile>(String.CASE_INSENSITIVE_ORDER) { it.displayName() }
+        compareBy<ServerProfile> { it.displayName().lowercase() }
             .thenBy { it.address }
     )
 

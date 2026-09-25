@@ -14,6 +14,8 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -173,9 +175,9 @@ object XrayProbe {
         if (servers.isEmpty()) return emptyMap()
         val semaphore = Semaphore(parallelism.coerceAtLeast(1))
         val results = ConcurrentHashMap<String, Int>()
-        kotlinx.coroutines.coroutineScope {
+        coroutineScope {
             servers.map { server ->
-                kotlinx.coroutines.async {
+                async {
                     semaphore.withPermit {
                         val value = measure(context, server, url, timeoutMs)
                         if (value != null) {
