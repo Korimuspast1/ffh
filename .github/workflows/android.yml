@@ -117,6 +117,20 @@ jobs:
           $GRADLE_CMD --no-daemon --stacktrace --console=plain \
             :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease 2>&1 | tee -a dist/build.log
 
+      - name: Test report
+        continue-on-error: true
+        run: |
+          echo "== unit test results ==" >> dist/build.log
+          if [ -d app/build/test-results ]; then
+            for f in $(find app/build/test-results -name '*.xml'); do
+              if grep -q "<failure" "$f"; then
+                echo "===== $f" >> dist/build.log
+                sed -e 's/&quot;/"/g' "$f" >> dist/build.log
+              fi
+            done
+          fi
+          tail -60 dist/build.log
+
       - name: Collect artifacts
         if: always()
         run: |

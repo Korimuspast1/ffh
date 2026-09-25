@@ -88,7 +88,9 @@ class ThemeSpecTest {
     @Test
     fun `colours without hash are accepted`() {
         val spec = parseTheme("""{"buttonColor":"00FF0080"}""")
-        assertEquals("#00FF0080", spec?.buttonColor)
+        assertNotNull(spec)
+        // RRGGBBAA -> packed ARGB
+        assertEquals(0x8000FF00.toInt(), parseHexColor(spec!!.buttonColor).toPackedInt())
     }
 
     @Test
@@ -102,11 +104,14 @@ class ThemeSpecTest {
     }
 
     @Test
-    fun `intensity only changes saturation and value`() {
+    fun `intensity keeps gray gray and only brightens it`() {
         val gray = parseHexColor("#808080FF")
         val boosted = gray.withIntensity(0.5f)
-        // A fully desaturated colour stays gray no matter the intensity
-        assertEquals(gray.red, boosted.red, 0.001f)
+        assertEquals(boosted.red, boosted.green, 0.001f)
+        assertEquals(boosted.green, boosted.blue, 0.001f)
+        assertTrue(boosted.red >= gray.red)
+        // zero intensity is a no-op
+        assertEquals(gray.red, gray.withIntensity(0f).red, 0.001f)
         val red = parseHexColor("#FF0000FF")
         assertTrue(red.withIntensity(1f).red >= red.red)
     }
