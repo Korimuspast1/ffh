@@ -1,0 +1,32 @@
+FFH VPN build log
+run:      2 (86a1fe00aca9eec2cb03a5447a2491ff36e5b181)
+xray:     v26.3.27
+gradle:   8.11.1
+date:     2026-09-25T05:25:47Z
+==> Xray-core v26.3.27
+    downloading Xray-android-arm64-v8a.zip
+    arm64-v8a <- xray 35M
+    downloading Xray-android-amd64.zip
+    x86_64 <- xray 38M
+==> Xray core prepared:
+    /home/runner/work/ffh/ffh/app/src/main/jniLibs/x86_64/libxray.so (38878264 bytes)
+    /home/runner/work/ffh/ffh/app/src/main/jniLibs/arm64-v8a/libxray.so (36516696 bytes)
+    total 29564
+    drwxr-xr-x 2 runner runner     4096 Sep 25 05:27 .
+    drwxr-xr-x 6 runner runner     4096 Sep 25 05:27 ..
+    -rw-r--r-- 1 runner runner 19768301 Sep 25 05:27 geoip.dat
+    -rw-r--r-- 1 runner runner 10491954 Sep 25 05:27 geosite.dat
+
+Welcome to Gradle 8.11.1!
+
+Here are the highlights of this release:
+ - Parallel load and store for Configuration Cache
+/home/runner/work/_temp/d889357b-004e-40ff-9c92-52b89f728a1f.sh: line 2: ./gradlew: No such file or directory
+== jniLibs
+    app/src/main/jniLibs/x86_64/libxray.so (38878264 bytes)
+    app/src/main/jniLibs/arm64-v8a/libxray.so (36516696 bytes)
+== dist
+total 12
+drwxr-xr-x 2 runner runner 4096 Sep 25 05:25 .
+drwxr-xr-x 8 runner runner 4096 Sep 25 05:27 ..
+-rw-r--r-- 1 runner runner 1120 Sep 25 05:28 build.log
