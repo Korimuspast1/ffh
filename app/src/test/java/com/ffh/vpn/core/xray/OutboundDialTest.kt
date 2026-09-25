@@ -1,6 +1,7 @@
 package com.ffh.vpn.core.xray
 
 import com.ffh.vpn.data.parse.LinkParser
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -31,6 +32,17 @@ class OutboundDialTest {
         val sni = rewritten["streamSettings"]!!.jsonObject["tlsSettings"]!!
             .jsonObject["serverName"]!!.jsonPrimitive.content
         assertEquals("www.example.com", sni)
+    }
+
+    @Test
+    fun `websocket host moves out of headers`() {
+        val stored = Json.parseToJsonElement(
+            """{"protocol":"vless","streamSettings":{"network":"ws","wsSettings":{"path":"/ws","headers":{"Host":"cdn.example"}}}}"""
+        ).jsonObject
+        val fixed = OutboundDial.normalize(stored)
+        val ws = fixed["streamSettings"]!!.jsonObject["wsSettings"]!!.jsonObject
+        assertEquals("cdn.example", ws["host"]!!.jsonPrimitive.content)
+        assertFalse(ws.containsKey("headers"))
     }
 
     @Test

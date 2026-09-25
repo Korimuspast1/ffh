@@ -30,13 +30,13 @@ object XrayConfigBuilder {
     private val pretty = Json { prettyPrint = true }
 
     fun build(server: ServerProfile, settings: AppSettings): String {
-        val outbound = server.outbound ?: error("server has no outbound")
+        val outbound = OutboundDial.normalize(server.outbound ?: error("server has no outbound"))
         val dialHost = OutboundDial.hostOf(outbound) ?: server.address
 
         val root = buildJsonObject {
             putJsonObject("log") {
                 put("loglevel", settings.logLevel)
-                put("access", "")
+                put("access", "none")
             }
             put("dns", buildDns(settings, dialHost))
             putJsonArray("inbounds") {

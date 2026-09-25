@@ -498,7 +498,7 @@ object LinkParser {
         when (network) {
             "ws" -> putJsonObject("wsSettings") {
                 put("path", path ?: "/")
-                if (!host.isNullOrBlank()) putJsonObject("headers") { put("Host", host) }
+                if (!host.isNullOrBlank()) put("host", host)
                 p.i("maxed")?.let { put("maxEarlyData", it) }
                 p.i("maxearlydata")?.let { put("maxEarlyData", it) }
                 p.s("edn")?.let { put("earlyDataHeaderName", it) }

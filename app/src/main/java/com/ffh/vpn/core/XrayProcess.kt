@@ -140,36 +140,45 @@ object XrayProcess {
         env["TMPDIR"] = context.cacheDir.absolutePath
         env.putAll(extraEnv)
 
-        if (CoreLauncher.loaded) {
-            val argv = arrayOf(exe.absolutePath, "run", "-c", configFile.absolutePath)
-            val envp = env.map { (key, value) -> "$key=$value" }.toTypedArray()
-            val result = runCatching {
-                CoreLauncher.spawn(exe.absolutePath, argv, envp, tunFd)
-            }.getOrElse {
-                LogStore.append("core", "spawn threw: ${it.message}")
-                null
-            }
-            if (result == null || result.size < 2 || result[0] <= 0) {
-                LogStore.append("core", "spawn failed (errno ${runCatching { CoreLauncher.lastError() }.getOrDefault(-1)})")
+        // The latency probe has no tunnel fd. The official Android binary is
+        // built with cgo; a raw fork from this process leaves it unable to
+        // bind, so the SOCKS port never opens. ProcessBuilder is the path
+        // Android prepares for networking, and it is what the probe must use.
+        if (tunFd < 0 || !CoreLauncher.loaded) {
+            if (tunFd >= 0) {
+                LogStore.append("core", "refusing to start the tunnel without the native launcher")
                 return null
             }
-            return CoreHandle.native(result[0], result[1], if (result.size > 2) result[2] else tunFd)
+            LogStore.append("core", "starting probe via process")
+            return runCatching {
+                val builder = ProcessBuilder(exe.absolutePath, "run", "-c", configFile.absolutePath)
+                builder.directory(File(context.filesDir, "ffh"))
+                builder.redirectErrorStream(true)
+                builder.environment().apply {
+                    putAll(env)
+                    remove("XRAY_TUN_FD")
+                    remove("xray.tun.fd")
+                }
+                CoreHandle.java(builder.start())
+            }.getOrElse {
+                LogStore.append("core", "failed to start: ${it.message}")
+                null
+            }
         }
 
-        if (tunFd >= 0) {
-            LogStore.append("core", "refusing to start the tunnel without the native launcher")
-            return null
-        }
-        return runCatching {
-            val builder = ProcessBuilder(exe.absolutePath, "run", "-c", configFile.absolutePath)
-            builder.directory(File(context.filesDir, "ffh"))
-            builder.redirectErrorStream(true)
-            builder.environment().putAll(env)
-            CoreHandle.java(builder.start())
+        val argv = arrayOf(exe.absolutePath, "run", "-c", configFile.absolutePath)
+        val envp = env.map { (key, value) -> "$key=$value" }.toTypedArray()
+        val result = runCatching {
+            CoreLauncher.spawn(exe.absolutePath, argv, envp, tunFd)
         }.getOrElse {
-            LogStore.append("core", "failed to start: ${it.message}")
+            LogStore.append("core", "spawn threw: ${it.message}")
             null
         }
+        if (result == null || result.size < 2 || result[0] <= 0) {
+            LogStore.append("core", "spawn failed (errno ${runCatching { CoreLauncher.lastError() }.getOrDefault(-1)})")
+            return null
+        }
+        return CoreHandle.native(result[0], result[1], if (result.size > 2) result[2] else tunFd)
     }
 
     fun stop() {

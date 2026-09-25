@@ -1,5 +1,7 @@
 package com.ffh.vpn.net
 
+import com.ffh.vpn.core.FfhVpnService
+import com.ffh.vpn.data.LogStore
 import com.ffh.vpn.data.model.ServerProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,9 +16,11 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.Socket
+import javax.net.SocketFactory
 import java.util.concurrent.TimeUnit
 
 /**
@@ -107,14 +111,39 @@ object UrlTester {
                     response.isSuccessful || response.code == 204 || response.code in 300..399
                 }
             } catch (t: Throwable) {
+                LogStore.append("ping", "request failed: ${t.javaClass.simpleName}: ${t.message}")
                 false
             } finally {
                 client.dispatcher.executorService.shutdown()
             }
         }
 
+    /** A socket that bypasses an active tunnel, so the probe can reach 127.0.0.1. */
+    private val directSockets = object : SocketFactory() {
+        override fun createSocket(): Socket = Socket().also { FfhVpnService.protect(it) }
+        override fun createSocket(host: String, port: Int): Socket = Socket().also {
+            FfhVpnService.protect(it)
+            it.connect(InetSocketAddress(host, port))
+        }
+        override fun createSocket(host: String, port: Int, local: InetAddress, localPort: Int): Socket = Socket().also {
+            FfhVpnService.protect(it)
+            it.bind(InetSocketAddress(local, localPort))
+            it.connect(InetSocketAddress(host, port))
+        }
+        override fun createSocket(address: InetAddress, port: Int): Socket = Socket().also {
+            FfhVpnService.protect(it)
+            it.connect(InetSocketAddress(address, port))
+        }
+        override fun createSocket(address: InetAddress, port: Int, local: InetAddress, localPort: Int): Socket = Socket().also {
+            FfhVpnService.protect(it)
+            it.bind(InetSocketAddress(local, localPort))
+            it.connect(InetSocketAddress(address, port))
+        }
+    }
+
     private fun client(proxy: Proxy, timeoutMs: Int): OkHttpClient = OkHttpClient.Builder()
         .proxy(proxy)
+        .socketFactory(directSockets)
         .connectTimeout(timeoutMs.toLong(), TimeUnit.MILLISECONDS)
         .readTimeout(timeoutMs.toLong(), TimeUnit.MILLISECONDS)
         .callTimeout((timeoutMs * 2).toLong(), TimeUnit.MILLISECONDS)

@@ -14,11 +14,13 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.util.concurrent.ConcurrentHashMap
@@ -48,9 +50,16 @@ object XrayProbe {
         return 0
     }
 
-    /** Config with a single local SOCKS inbound that leads to [server]. */
-    fun buildConfig(server: ServerProfile, port: Int): String? {
-        val outbound = server.outbound ?: return null
+    /**
+     * One local SOCKS inbound in front of [server]. The dial address is an IP
+     * when we could resolve it, so the core does not block in DNS before it
+     * listens. `access` is `none`: on 26.9.9 an empty string means "console"
+     * and fills the log pipe.
+     */
+    fun buildConfig(server: ServerProfile, port: Int, resolvedIp: String? = null): String? {
+        val raw = server.outbound ?: return null
+        val normalized = OutboundDial.normalize(raw)
+        val outbound = if (!resolvedIp.isNullOrBlank()) OutboundDial.rewrite(normalized, resolvedIp) else normalized
         val tagged = buildJsonObject {
             put("tag", XrayConfigBuilder.TAG_PROXY)
             for ((key, value) in outbound) {
@@ -60,8 +69,12 @@ object XrayProbe {
         }
         val root = buildJsonObject {
             putJsonObject("log") {
-                put("loglevel", "error")
-                put("access", "")
+                put("loglevel", "info")
+                put("access", "none")
+            }
+            putJsonObject("dns") {
+                put("queryStrategy", "UseIPv4")
+                putJsonArray("servers") { add("localhost") }
             }
             putJsonArray("inbounds") {
                 addJsonObject {
@@ -71,13 +84,17 @@ object XrayProbe {
                     put("protocol", "socks")
                     putJsonObject("settings") {
                         put("auth", "noauth")
-                        put("udp", true)
-                        put("ip", "127.0.0.1")
+                        put("udp", false)
                     }
                 }
             }
             putJsonArray("outbounds") {
                 add(tagged)
+                addJsonObject {
+                    put("tag", XrayConfigBuilder.TAG_DIRECT)
+                    put("protocol", "freedom")
+                    putJsonObject("settings") { put("domainStrategy", "UseIP") }
+                }
             }
             putJsonObject("routing") {
                 put("domainStrategy", "AsIs")
@@ -104,19 +121,26 @@ object XrayProbe {
         }.also { it.isDaemon = true; it.start() }
     }
 
-    private suspend fun waitForPort(port: Int, timeoutMs: Int): Boolean {
+    /**
+     * @return null when the port accepted a connection, otherwise the reason.
+     */
+    private suspend fun waitForPort(port: Int, timeoutMs: Int, alive: () -> Boolean): String? {
+        var last = "not checked"
         val deadline = System.currentTimeMillis() + timeoutMs
         while (System.currentTimeMillis() < deadline) {
-            val open = runCatching {
+            if (!alive()) return "core exited"
+            val error = runCatching {
                 Socket().use { socket ->
+                    com.ffh.vpn.core.FfhVpnService.protect(socket)
                     socket.connect(InetSocketAddress("127.0.0.1", port), 300)
-                    true
                 }
-            }.getOrDefault(false)
-            if (open) return true
+                null
+            }.getOrElse { it.message ?: it.javaClass.simpleName }
+            if (error == null) return null
+            last = error
             delay(120)
         }
-        return false
+        return last
     }
 
     /** Latency of one HTTP request through [server], or null when unreachable. */
@@ -125,22 +149,33 @@ object XrayProbe {
         server: ServerProfile,
         url: String,
         timeoutMs: Int
-    ): Int? {
-        if (!server.isSupported) return null
-        if (!XrayProcess.isAvailable(context)) return null
+    ): Int? = withContext(Dispatchers.IO) {
+        if (!server.isSupported) return@withContext null
+        if (!XrayProcess.isAvailable(context)) return@withContext null
 
         val port = takePort()
-        if (port == 0) return null
+        if (port == 0) return@withContext null
         var process: CoreHandle? = null
-        return try {
-            val config = buildConfig(server, port) ?: return null
+        try {
+            val host = server.outbound?.let { OutboundDial.hostOf(it) } ?: server.address
+            val resolved = HostResolver.resolveV4(host, 2_500)
+            if (resolved == null && !OutboundDial.isIp(host)) {
+                LogStore.append("ping", "${server.displayName()} DNS did not answer, dialing $host")
+            }
+            val config = buildConfig(server, port, resolved) ?: return@withContext null
             val configFile = XrayProcess.probeConfigFile(context, port)
             configFile.writeText(config)
-            process = XrayProcess.launch(context, configFile) ?: return null
+            process = XrayProcess.launch(context, configFile) ?: return@withContext null
             drain(process)
-            if (!waitForPort(port, timeoutMs.coerceAtMost(4000))) {
-                LogStore.append("ping", "${server.displayName()} did not open the local port")
-                return null
+            val listenWait = timeoutMs.coerceIn(4_000, 12_000)
+            val reason = waitForPort(port, listenWait) { process?.isAlive() != false }
+            if (reason != null) {
+                val exit = process?.reap() ?: -2
+                LogStore.append(
+                    "ping",
+                    "${server.displayName()} did not open the local port ($reason, alive=${process?.isAlive() == true}, exit=$exit)"
+                )
+                return@withContext null
             }
             val started = System.nanoTime()
             val ok = com.ffh.vpn.net.UrlTester.getThroughSocks(port, url, timeoutMs)

@@ -38,6 +38,36 @@ object OutboundDial {
     }
 
     /**
+     * Xray 26.9.9 wants the websocket host as `wsSettings.host`. A `Host`
+     * header is only a warning for ws and a hard error for httpupgrade, and
+     * subscriptions already stored the old shape. Lift it before the core
+     * reads the document.
+     */
+    fun normalize(outbound: JsonObject): JsonObject {
+        val stream = outbound["streamSettings"] as? JsonObject ?: return outbound
+        val copy = LinkedHashMap(stream)
+        var changed = false
+        for (key in listOf("wsSettings", "httpupgradeSettings", "xhttpSettings")) {
+            if (liftHost(copy, key)) changed = true
+        }
+        if (!changed) return outbound
+        return outbound.replacing("streamSettings", JsonObject(copy))
+    }
+
+    private fun liftHost(stream: MutableMap<String, JsonElement>, key: String): Boolean {
+        val settings = stream[key] as? JsonObject ?: return false
+        val headers = settings["headers"] as? JsonObject ?: return false
+        val hostEntry = headers.entries.firstOrNull { it.key.equals("Host", ignoreCase = true) } ?: return false
+        val updated = LinkedHashMap(settings)
+        if (updated["host"] == null) updated["host"] = hostEntry.value
+        val remaining = LinkedHashMap(headers)
+        remaining.keys.filter { it.equals("Host", ignoreCase = true) }.forEach { remaining.remove(it) }
+        if (remaining.isEmpty()) updated.remove("headers") else updated["headers"] = JsonObject(remaining)
+        stream[key] = JsonObject(updated)
+        return true
+    }
+
+    /**
      * Returns a copy whose dial address is [ip]. TLS server name, path and
      * every other field stay as they were parsed from the share link.
      */

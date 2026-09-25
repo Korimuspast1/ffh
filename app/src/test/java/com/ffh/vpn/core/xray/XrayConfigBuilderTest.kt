@@ -69,6 +69,8 @@ class XrayConfigBuilderTest {
         assertEquals("ws", stream["network"]?.jsonPrimitive?.content)
         assertEquals("tls", stream["security"]?.jsonPrimitive?.content)
         assertEquals("/ws", stream.obj("wsSettings")["path"]?.jsonPrimitive?.content)
+        assertEquals("example.com", stream.obj("wsSettings")["host"]?.jsonPrimitive?.content)
+        assertEquals("none", config(profile).obj("log")["access"]?.jsonPrimitive?.content)
     }
 
     @Test

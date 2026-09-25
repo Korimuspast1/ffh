@@ -74,12 +74,28 @@ static void rewrite_tun_env(char **envp, int target) {
     }
 }
 
+/* The app blocks signals the runtime does not want blocked. They survive
+ * exec, and the cgo Android core then fails to open sockets. */
+static void reset_child_signals(void) {
+    sigset_t all;
+    sigfillset(&all);
+    sigprocmask(SIG_UNBLOCK, &all, NULL);
+    struct sigaction action;
+    memset(&action, 0, sizeof(action));
+    action.sa_handler = SIG_DFL;
+    for (int sig = 1; sig < 32; sig++) {
+        if (sig == SIGKILL || sig == SIGSTOP) continue;
+        sigaction(sig, &action, NULL);
+    }
+}
+
 static void child_exec(int tun_fd, int log_write, char *binary, char **argv, char **envp) {
     /* Die with the app. Otherwise a killed UI leaves an orphan core holding
      * the tunnel and the next start cannot bind it. */
     prctl(PR_SET_PDEATHSIG, SIGKILL);
     if (getppid() == 1) _exit(1);
     setpgid(0, 0);
+    reset_child_signals();
 
     int devnull = open("/dev/null", O_RDONLY);
     if (devnull >= 0) {

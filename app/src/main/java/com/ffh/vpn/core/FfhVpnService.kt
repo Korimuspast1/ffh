@@ -30,6 +30,11 @@ class FfhVpnService : VpnService() {
     private val generation = AtomicInteger(0)
     private val stopping = AtomicBoolean(false)
 
+    override fun onCreate() {
+        super.onCreate()
+        running = this
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_DISCONNECT -> stopTunnel()
@@ -45,6 +50,7 @@ class FfhVpnService : VpnService() {
     }
 
     override fun onDestroy() {
+        if (running === this) running = null
         stopTunnel()
         super.onDestroy()
     }
@@ -288,6 +294,15 @@ class FfhVpnService : VpnService() {
     companion object {
         const val ACTION_CONNECT = "com.ffh.vpn.CONNECT"
         const val ACTION_DISCONNECT = "com.ffh.vpn.DISCONNECT"
+
+        @Volatile
+        private var running: FfhVpnService? = null
+
+        /** Keeps a local probe socket out of the tunnel while a VPN is up. */
+        fun protect(socket: java.net.Socket): Boolean {
+            val service = running ?: return false
+            return runCatching { service.protect(socket) }.getOrDefault(false)
+        }
 
         private const val TUN_IPV4 = "10.89.15.1"
         private const val TUN_PREFIX = 24
