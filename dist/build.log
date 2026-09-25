@@ -1,8 +1,8 @@
 FFH VPN build log
-run:      5 (b018aa45431f35ecd68a726cdaad5cde9227a756)
+run:      6 (c0fbc8f0bb2e7b863a4ca5bad8422cc7b59b7126)
 xray:     v26.3.27
 gradle:   8.11.1
-date:     2026-09-25T06:03:38Z
+date:     2026-09-25T10:12:09Z
 ==> Xray-core v26.3.27
     downloading Xray-android-arm64-v8a.zip
     arm64-v8a <- xray 35M
@@ -12,10 +12,10 @@ date:     2026-09-25T06:03:38Z
     /home/runner/work/ffh/ffh/app/src/main/jniLibs/x86_64/libxray.so (38878264 bytes)
     /home/runner/work/ffh/ffh/app/src/main/jniLibs/arm64-v8a/libxray.so (36516696 bytes)
     total 29564
-    drwxr-xr-x 2 runner runner     4096 Sep 25 06:04 .
-    drwxr-xr-x 6 runner runner     4096 Sep 25 06:04 ..
-    -rw-r--r-- 1 runner runner 19768301 Sep 25 06:04 geoip.dat
-    -rw-r--r-- 1 runner runner 10491954 Sep 25 06:04 geosite.dat
+    drwxr-xr-x 2 runner runner     4096 Sep 25 10:13 .
+    drwxr-xr-x 6 runner runner     4096 Sep 25 10:13 ..
+    -rw-r--r-- 1 runner runner 19768301 Sep 25 10:13 geoip.dat
+    -rw-r--r-- 1 runner runner 10491954 Sep 25 10:13 geosite.dat
 
 Welcome to Gradle 8.11.1!
 
@@ -24,14 +24,14 @@ Here are the highlights of this release:
 Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :wrapper
 
-BUILD SUCCESSFUL in 1m 2s
+BUILD SUCCESSFUL in 1m
 1 actionable task: 1 executed
 --- wrapper files ---
 total 56
-drwxr-xr-x 2 runner runner  4096 Sep 25 06:05 .
-drwxr-xr-x 3 runner runner  4096 Sep 25 06:05 ..
--rw-r--r-- 1 runner runner 43583 Sep 25 06:05 gradle-wrapper.jar
--rw-r--r-- 1 runner runner   253 Sep 25 06:05 gradle-wrapper.properties
+drwxr-xr-x 2 runner runner  4096 Sep 25 10:12 .
+drwxr-xr-x 3 runner runner  4096 Sep 25 10:12 ..
+-rw-r--r-- 1 runner runner 43583 Sep 25 10:14 gradle-wrapper.jar
+-rw-r--r-- 1 runner runner   253 Sep 25 10:14 gradle-wrapper.properties
 == using ./gradlew
 Downloading https://services.gradle.org/distributions/gradle-8.11.1-bin.zip
 .............10%.............20%.............30%.............40%.............50%.............60%.............70%.............80%.............90%.............100%
@@ -54,91 +54,19 @@ Daemon will be stopped at the end of the build
 > Task :app:processDebugManifest
 > Task :app:preDebugUnitTestBuild UP-TO-DATE
 > Task :app:javaPreCompileDebug
-> Task :app:javaPreCompileDebugUnitTest
-> Task :app:processDebugManifestForPackage
+> Task :app:javaPreCompileDebugUnitTest FROM-CACHE
 > Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :app:mergeDebugShaders
 > Task :app:compileDebugShaders NO-SOURCE
 > Task :app:generateDebugAssets UP-TO-DATE
 > Task :app:mergeDebugAssets
+> Task :app:processDebugManifestForPackage
 > Task :app:desugarDebugFileDependencies
-> Task :app:processDebugResources
 > Task :app:compressDebugAssets
+> Task :app:processDebugResources
 > Task :app:checkDebugDuplicateClasses
 > Task :app:compileDebugKotlin
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/core/FfhVpnService.kt:159:57 No value passed for parameter 'p2'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/core/VpnController.kt:23:46 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'com.ffh.vpn.data.model.ServerProfile?'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/core/VpnController.kt:23:69 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'com.ffh.vpn.data.model.ServerProfile?'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/AppNav.kt:248:26 Inapplicable candidate(s): fun applySettings(block: (AppSettings) -> AppSettings): Unit
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/AppNav.kt:255:26 Inapplicable candidate(s): fun applySettings(block: (AppSettings) -> AppSettings): Unit
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/AppNav.kt:262:26 Inapplicable candidate(s): fun applySettings(block: (AppSettings) -> AppSettings): Unit
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/AppNav.kt:268:26 Inapplicable candidate(s): fun applySettings(block: (AppSettings) -> AppSettings): Unit
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/AppNav.kt:275:26 Inapplicable candidate(s): fun applySettings(block: (AppSettings) -> AppSettings): Unit
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/AppNav.kt:281:26 Inapplicable candidate(s): fun applySettings(block: (AppSettings) -> AppSettings): Unit
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/AppNav.kt:287:26 Inapplicable candidate(s): fun applySettings(block: (AppSettings) -> AppSettings): Unit
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/AppNav.kt:293:26 Inapplicable candidate(s): fun applySettings(block: (AppSettings) -> AppSettings): Unit
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/MainActivity.kt:91:53 Unresolved reference 'normalized'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/components/Components.kt:125:30 'fun rememberRipple(bounded: Boolean = ..., radius: Dp = ..., color: Color = ...): Indication' is deprecated. rememberRipple has been deprecated - it returns an old Indication implementation that is not compatible with the new Indication APIs that provide notable performance improvements. Instead, use the new ripple APIs provided by design system libraries, such as material and material3. If you are implementing your own design system library, use createRippleNode to create your own custom ripple implementation that queries your own theme values. For a migration guide and background information, please visit developer.android.com.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/components/Components.kt:171:26 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/components/Components.kt:210:26 'fun rememberRipple(bounded: Boolean = ..., radius: Dp = ..., color: Color = ...): Indication' is deprecated. rememberRipple has been deprecated - it returns an old Indication implementation that is not compatible with the new Indication APIs that provide notable performance improvements. Instead, use the new ripple APIs provided by design system libraries, such as material and material3. If you are implementing your own design system library, use createRippleNode to create your own custom ripple implementation that queries your own theme values. For a migration guide and background information, please visit developer.android.com.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/components/Components.kt:393:61 Unresolved reference 'ms'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/components/Components.kt:455:30 'fun rememberRipple(bounded: Boolean = ..., radius: Dp = ..., color: Color = ...): Indication' is deprecated. rememberRipple has been deprecated - it returns an old Indication implementation that is not compatible with the new Indication APIs that provide notable performance improvements. Instead, use the new ripple APIs provided by design system libraries, such as material and material3. If you are implementing your own design system library, use createRippleNode to create your own custom ripple implementation that queries your own theme values. For a migration guide and background information, please visit developer.android.com.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/components/Components.kt:490:30 'fun rememberRipple(bounded: Boolean = ..., radius: Dp = ..., color: Color = ...): Indication' is deprecated. rememberRipple has been deprecated - it returns an old Indication implementation that is not compatible with the new Indication APIs that provide notable performance improvements. Instead, use the new ripple APIs provided by design system libraries, such as material and material3. If you are implementing your own design system library, use createRippleNode to create your own custom ripple implementation that queries your own theme values. For a migration guide and background information, please visit developer.android.com.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/components/Components.kt:526:30 'fun rememberRipple(bounded: Boolean = ..., radius: Dp = ..., color: Color = ...): Indication' is deprecated. rememberRipple has been deprecated - it returns an old Indication implementation that is not compatible with the new Indication APIs that provide notable performance improvements. Instead, use the new ripple APIs provided by design system libraries, such as material and material3. If you are implementing your own design system library, use createRippleNode to create your own custom ripple implementation that queries your own theme values. For a migration guide and background information, please visit developer.android.com.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:119:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:131:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:133:57 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:135:54 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:137:50 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:142:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:144:60 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:149:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:151:56 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:153:51 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:158:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:160:53 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:165:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:167:52 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:192:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:194:66 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:196:82 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:201:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:256:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:282:11 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:348:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:350:46 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:367:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:374:56 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:382:55 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:388:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:401:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:480:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:482:54 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:484:62 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:664:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:666:50 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:718:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:746:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:814:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:823:51 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:825:85 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:827:86 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:855:73 No value passed for parameter 'onClick'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:855:103 Argument type mismatch: actual type is 'kotlin.Function0<kotlin.Unit>', but 'androidx.compose.ui.unit.Dp' was expected.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:856:70 No value passed for parameter 'onClick'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:856:100 Argument type mismatch: actual type is 'kotlin.Function0<kotlin.Unit>', but 'androidx.compose.ui.unit.Dp' was expected.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:899:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:901:59 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:905:59 No value passed for parameter 'value'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SettingsScreens.kt:951:77 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SubscriptionInfoScreen.kt:78:76 No value passed for parameter 'onClick'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SubscriptionInfoScreen.kt:78:109 Argument type mismatch: actual type is 'kotlin.Function0<kotlin.Unit>', but 'androidx.compose.ui.unit.Dp' was expected.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SubscriptionInfoScreen.kt:183:7 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SubscriptionInfoScreen.kt:235:83 Unresolved reference 'ColumnScope'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/screens/SubscriptionInfoScreen.kt:289:45 Unresolved reference 'size'.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/theme/AppThemeSpec.kt:198:45 Cannot infer type for this parameter. Please specify it explicitly.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/theme/AppThemeSpec.kt:198:60 Argument type mismatch: actual type is 'com.ffh.vpn.ui.theme.AppThemeSpec', but 'kotlinx.serialization.SerializationStrategy<T>' was expected.
-e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/theme/AppThemeSpec.kt:198:60 No value passed for parameter 'value'.
+e: file:///home/runner/work/ffh/ffh/app/src/main/java/com/ffh/vpn/ui/components/Components.kt:394:54 Unresolved reference 'strings'.
 
 > Task :app:mergeExtDexDebug
 > Task :app:compileDebugKotlin FAILED
@@ -350,13 +278,13 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	... 2 more
 
 
-BUILD FAILED in 2m 9s
-23 actionable tasks: 23 executed
+BUILD FAILED in 2m 10s
+23 actionable tasks: 22 executed, 1 from cache
 == jniLibs
     app/src/main/jniLibs/x86_64/libxray.so (38878264 bytes)
     app/src/main/jniLibs/arm64-v8a/libxray.so (36516696 bytes)
 == dist
-total 48
-drwxr-xr-x 2 runner runner  4096 Sep 25 06:03 .
-drwxr-xr-x 9 runner runner  4096 Sep 25 06:06 ..
--rw-r--r-- 1 runner runner 38662 Sep 25 06:07 build.log
+total 36
+drwxr-xr-x 2 runner runner  4096 Sep 25 10:12 .
+drwxr-xr-x 9 runner runner  4096 Sep 25 10:15 ..
+-rw-r--r-- 1 runner runner 24761 Sep 25 10:16 build.log
