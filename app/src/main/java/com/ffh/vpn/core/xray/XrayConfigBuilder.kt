@@ -24,7 +24,7 @@ object XrayConfigBuilder {
     const val TAG_PROXY = "proxy"
     const val TAG_DIRECT = "direct"
     const val TAG_BLOCK = "block"
-    const val TAG_DNS_OUT = "dns-out"
+    /** Xray has no `dns-out` handler, so "local" DNS is served by [TAG_DIRECT]. */
     const val TUN_NAME = "tun0"
 
     private val pretty = Json { prettyPrint = true }
@@ -35,7 +35,7 @@ object XrayConfigBuilder {
         val root = buildJsonObject {
             putJsonObject("log") {
                 put("loglevel", settings.logLevel)
-                put("access", "none")
+                put("access", "")
             }
             put("dns", buildDns(settings))
             putJsonArray("inbounds") {
@@ -169,13 +169,14 @@ object XrayConfigBuilder {
             put("outboundTag", TAG_BLOCK)
         }
 
-        // DNS handling
+        // DNS handling: "remote" resolves through the server, "local" sends the
+        // query straight out so that it never travels through the tunnel.
         rules += buildJsonObject {
             put("type", "field")
             putJsonArray("inboundTag") { add("tun-in") }
             put("port", "53")
             put("network", "udp")
-            put("outboundTag", if (settings.dnsMode == "local") TAG_DNS_OUT else TAG_PROXY)
+            put("outboundTag", if (settings.dnsMode == "local") TAG_DIRECT else TAG_PROXY)
         }
 
         if (settings.routingMode != "global") {
