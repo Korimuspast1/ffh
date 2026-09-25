@@ -130,10 +130,10 @@ fun AppNav(
         }
     }
 
-    fun applySettings(block: (AppSettings) -> AppSettings) {
+    fun applySettings(updated: AppSettings) {
         scope.launch {
             val previous = settings.language
-            AppRepository.updateSettings(block)
+            AppRepository.updateSettings { updated }
             if (AppRepository.settings().language != previous) {
                 onLanguageChanged()
             }
@@ -143,6 +143,8 @@ fun AppNav(
     LaunchedEffect(Unit) {
         if (settings.updateOnStart) {
             AppRepository.refreshAll()
+        } else if (settings.autoUpdateHours > 0) {
+            AppRepository.refreshStale()
         }
     }
 

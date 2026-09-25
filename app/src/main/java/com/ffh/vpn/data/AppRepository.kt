@@ -275,6 +275,25 @@ object AppRepository {
         }
     }
 
+    /**
+     * Refreshes remote subscriptions whose data is older than their update
+     * interval (`profile-update-interval` or the global setting).
+     */
+    suspend fun refreshStale(): Int {
+        val settings = settings()
+        if (settings.autoUpdateHours <= 0) return 0
+        val now = System.currentTimeMillis()
+        var count = 0
+        for (sub in _state.value.subscriptions.filter { it.isRemote }) {
+            val hours = (sub.updateIntervalHours?.takeIf { it > 0 } ?: settings.autoUpdateHours).toLong()
+            val last = sub.lastUpdatedAt ?: 0L
+            if (last <= 0L || now - last >= hours * 60 * 60 * 1000L) {
+                if (refreshSubscription(sub.id)) count++
+            }
+        }
+        return count
+    }
+
     suspend fun refreshAll(): Int {
         val subs = _state.value.subscriptions.filter { it.isRemote }
         var ok = 0

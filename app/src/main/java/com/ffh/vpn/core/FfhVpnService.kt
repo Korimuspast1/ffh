@@ -156,7 +156,7 @@ class FfhVpnService : VpnService() {
         // The file descriptor has to survive the exec() of the core process,
         // so FD_CLOEXEC must be cleared before it is handed over.
         runCatching {
-            val flags = Os.fcntlInt(pfd.fileDescriptor, OsConstants.F_GETFD)
+            val flags = Os.fcntlInt(pfd.fileDescriptor, OsConstants.F_GETFD, 0)
             if (flags and OsConstants.FD_CLOEXEC != 0) {
                 Os.fcntlInt(pfd.fileDescriptor, OsConstants.F_SETFD, flags and OsConstants.FD_CLOEXEC.inv())
             }

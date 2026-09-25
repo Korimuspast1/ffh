@@ -852,10 +852,8 @@ fun LogsScreen(onBack: () -> Unit, onCopy: (String) -> Unit) {
                 title = strings.logs,
                 onBack = onBack,
                 actions = {
-                    IconAction(Icons.Default.Delete, strings.clearLogs, palette.subHeaderButtonColor) { LogStore.clear() }
-                    IconAction(Icons.Default.Link, strings.copyLogs, palette.subHeaderButtonColor) {
-                        onCopy(LogStore.snapshot())
-                    }
+                    IconAction(Icons.Default.Delete, strings.clearLogs, palette.subHeaderButtonColor, onClick = { LogStore.clear() })
+                    IconAction(Icons.Default.Link, strings.copyLogs, palette.subHeaderButtonColor, onClick = { onCopy(LogStore.snapshot()) })
                 }
             )
             if (lines.isEmpty()) {

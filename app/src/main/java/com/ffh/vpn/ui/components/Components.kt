@@ -13,6 +13,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -31,7 +32,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PowerSettingsNew
-import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.ripple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -122,7 +123,7 @@ fun IconAction(
             .clickable(
                 enabled = enabled,
                 interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple(color = tint),
+                indication = ripple(color = tint),
                 onClick = onClick
             ),
         contentAlignment = Alignment.Center
@@ -207,7 +208,7 @@ fun SettingRow(
     val modifier = if (onClick != null) {
         Modifier.clickable(
             interactionSource = remember { MutableInteractionSource() },
-            indication = rememberRipple(color = palette.settingsControlsTintColor),
+            indication = ripple(color = palette.settingsControlsTintColor),
             onClick = onClick
         )
     } else Modifier
@@ -242,8 +243,8 @@ fun SettingRow(
 @Composable
 fun SettingValueRow(
     title: String,
+    value: String = "",
     subtitle: String? = null,
-    value: String,
     icon: ImageVector? = null,
     onClick: () -> Unit
 ) {
@@ -390,7 +391,7 @@ fun ServerRow(
             Text(
                 text = when {
                     profile.pingMillis <= 0 -> "—"
-                    else -> "${profile.pingMillis} ${Format.ms}"
+                    else -> "${profile.pingMillis} ${strings.ms}"
                 },
                 style = MaterialTheme.typography.labelMedium,
                 color = pingColor(profile.pingMillis),
@@ -452,7 +453,7 @@ fun PowerButton(
             .background(if (connected) palette.buttonColor else palette.buttonColor)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple(color = palette.powerIconColor),
+                indication = ripple(color = palette.powerIconColor),
                 onClick = onClick
             ),
         contentAlignment = Alignment.Center
@@ -487,7 +488,7 @@ fun FfhButton(
             .clickable(
                 enabled = enabled,
                 interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple(color = palette.buttonTextColor),
+                indication = ripple(color = palette.buttonTextColor),
                 onClick = onClick
             )
             .padding(horizontal = 20.dp),
@@ -523,7 +524,7 @@ fun SecondaryButton(
             .border(1.dp, palette.hairline, RoundedCornerShape(16.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple(color = palette.settingsControlsTintColor),
+                indication = ripple(color = palette.settingsControlsTintColor),
                 onClick = onClick
             )
             .padding(horizontal = 18.dp),

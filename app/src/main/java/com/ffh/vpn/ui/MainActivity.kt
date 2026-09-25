@@ -27,6 +27,7 @@ import com.ffh.vpn.i18n.ProvideStrings
 import com.ffh.vpn.ui.theme.AppThemeSpec
 import com.ffh.vpn.ui.theme.FfhTheme
 import com.ffh.vpn.ui.theme.ThemePresets
+import com.ffh.vpn.ui.theme.normalized
 import com.ffh.vpn.ui.theme.parseTheme
 import kotlinx.coroutines.launch
 

@@ -16,8 +16,9 @@ object VpnController {
     }
 
     suspend fun connect(context: Context, serverId: String? = null): Action {
-        val server = if (serverId != null) AppRepository.server(serverId) else AppRepository.selectedServer
-            ?: return Action.Failed("no server selected")
+        val server = (
+            if (serverId != null) AppRepository.server(serverId) else AppRepository.selectedServer
+            ) ?: return Action.Failed("no server selected")
 
         if (serverId != null) {
             AppRepository.setSelection(server.subscriptionId, server.id)
