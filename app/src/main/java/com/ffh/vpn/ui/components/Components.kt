@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.ffh.vpn.data.model.ServerProfile
+import com.ffh.vpn.i18n.LocalStrings
 import com.ffh.vpn.ui.Format
 import com.ffh.vpn.ui.theme.LocalFfhPalette
 
@@ -388,6 +389,7 @@ fun ServerRow(
             )
         }
         if (showPing) {
+            val strings = LocalStrings.current
             Text(
                 text = when {
                     profile.pingMillis <= 0 -> "—"
