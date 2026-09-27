@@ -9,6 +9,9 @@ on:
       - 'webview-release/**'
       - '.github/workflows/build-webview-apk.yml'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,10 +30,19 @@ jobs:
         run: gradle -p webview-release :app:assembleRelease --stacktrace
       - name: Copy APK
         run: |
-          mkdir -p release-artifacts
+          mkdir -p release-artifacts artifacts
           cp webview-release/app/build/outputs/apk/release/app-release.apk release-artifacts/lexora-webview-real.apk
+          cp release-artifacts/lexora-webview-real.apk artifacts/lexora-webview-real.apk
           sha256sum release-artifacts/lexora-webview-real.apk > release-artifacts/lexora-webview-real.sha256
+          sha256sum artifacts/lexora-webview-real.apk > artifacts/lexora-webview-real.sha256
       - uses: actions/upload-artifact@v4
         with:
           name: lexora-webview-real-apk
           path: release-artifacts/*
+      - name: Commit APK to branch for direct phone download
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add artifacts/lexora-webview-real.apk artifacts/lexora-webview-real.sha256
+          git commit -m "Publish real Lexora WebView APK [skip ci]" || exit 0
+          git push
