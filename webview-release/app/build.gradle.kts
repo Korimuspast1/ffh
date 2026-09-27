@@ -1,6 +1,5 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
 }
 
 android {
@@ -11,8 +10,8 @@ android {
         applicationId = "com.korimuspast1.lexora"
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.4.0"
+        versionCode = 5
+        versionName = "0.5.0"
     }
 
     buildTypes {
@@ -24,9 +23,5 @@ android {
             isShrinkResources = false
             signingConfig = signingConfigs.getByName("debug")
         }
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
     }
 }
