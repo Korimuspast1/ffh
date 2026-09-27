@@ -1,0 +1,3 @@
+<full-backup-content>
+    <exclude domain="sharedpref" path="encrypted_prefs.xml" />
+</full-backup-content>

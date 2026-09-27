@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id
+  email        String   @unique
+  username     String   @unique
+  displayName  String
+  passwordHash String
+  salt         String
+  avatarUrl    String?
+  bio          String?
+  interfaceLanguage String @default("ru")
+  gems         Int      @default(0)
+  hearts       Int      @default(5)
+  totalXp      Int      @default(0)
+  currentStreak Int     @default(0)
+  longestStreak Int     @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Progress {
+  userId       String
+  lessonId     String
+  status       String
+  score        Int
+  accuracy     Float
+  bestCombo    Int
+  attempts     Int
+  completedAt  DateTime?
+  updatedAt    DateTime @updatedAt
+
+  @@id([userId, lessonId])
+}
+
+model LeaderboardEntry {
+  userId    String
+  leagueId  String
+  weekStart DateTime
+  weeklyXp  Int
+  rank      Int
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, leagueId, weekStart])
+}
+
+model Friend {
+  userId   String
+  friendId String
+  createdAt DateTime @default(now())
+
+  @@id([userId, friendId])
+}

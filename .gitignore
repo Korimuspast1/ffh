@@ -1,0 +1,17 @@
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
+.DS_Store
+*.jks
+*.keystore
+.env
+backend/node_modules/
+backend/dist/
+backend/.env
+
+backend/storage/*.json
+
+__pycache__/
+*.pyc

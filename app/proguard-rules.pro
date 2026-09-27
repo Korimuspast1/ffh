@@ -1,0 +1,11 @@
+-keepattributes Signature,*Annotation*,InnerClasses,EnclosingMethod
+-keep class kotlinx.serialization.** { *; }
+-keepclassmembers class **$$serializer { *; }
+-keep class dagger.hilt.** { *; }
+-keep class javax.inject.** { *; }
+-keep class retrofit2.** { *; }
+-dontwarn retrofit2.**
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keep class androidx.room.** { *; }
+-keep class com.google.firebase.** { *; }
